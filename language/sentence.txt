@@ -1,0 +1,25 @@
+    Sentence types:
+1. Statement
+2. Question
+3. Command
+4. Conditional
+
+    Explanation:
+1. Statement is a sentence to set an information and true.
+2. Question is a sentence to get an information or get a true.
+3. Command is a sentence to call a function.
+4. Conditional is get a true from the first sentence to be followed to the next sentence.
+
+Note:: the sentence it self are written by statement type.
+
+    Example:
+1. This apple is red.
+2. What is the color of this apple?
+3. Give me the apple.
+4. If the apple is red, then pick the apple.
+
+
+
+sentence is a collection of words.
+information is a data or a collection of data.
+function is a collection of an instruction.

@@ -1,0 +1,38 @@
+
+types:
+
+special types:
+-, :, =, #, _
+
+
+
+specifier types:
+time, loaction, flow,
+
+___ specifier ___
+
+
+global_ specifier:
+on, at,
+
+
+time specifier:
+before, after,
+
+
+point specifier:
+this, that, here, there
+
+
+loaction specifier:
+inside, outside,
+
+
+flow specifier:
+from, to,
+
+___ ___ ___ ___
+
+
+
+

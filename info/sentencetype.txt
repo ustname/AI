@@ -1,0 +1,12 @@
+
+
+-stq:
+what, why, how
+
+-sta:
+
+
+-stc:
+
+
+-sts:

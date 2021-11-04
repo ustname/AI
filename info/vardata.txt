@@ -1,0 +1,14 @@
+version 1
+
+metadata:
+4 byte = 'var '
+4 byte = version
+
+4 byte = variable name length
+n byte = variable name
+4 byte = properties number
+
+4 byte = properties name length
+n byte = properties name
+4 byte = properties data length
+n byte = properties data

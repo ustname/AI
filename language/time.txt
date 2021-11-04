@@ -1,0 +1,7 @@
+    Time types:
+1. Before
+2. Now
+3. After
+
+    Explanation:
+1. 

@@ -1,0 +1,24 @@
+
+to = dst
+from = src
+
+
+ans = var for answer
+set = write var arg to dst
+get = find var arg to ans
+tell = print arg
+call = run var arg
+
+with = arg list
+then = next sen
+from = var src
+to = var dst
+
+is = assignment var
+and = all var included
+or = only one var included
+
+example:
+call var_write with var and prop
+get var name then tell ans
+from var_stack; call calculate with '1 + 2*7' to result

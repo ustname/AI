@@ -1,0 +1,8 @@
+    Types:
+1. And
+2. Or
+3. Also
+4. But
+5. Which
+6. After
+7. Before

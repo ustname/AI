@@ -1,0 +1,16 @@
+
+
+
+reason:
+joy/pain, true/false, good/bad
+
+good    = joy + true    /   pain + false
+bad     = joy + false   /   pain + true
+
+like    = 
+hate    = 
+
+isLearn(true) = joy
+isMatter(true) = good
+feel(joy) = good
+feel(!pain) = must
