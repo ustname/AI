@@ -38,9 +38,21 @@ printf:
 	.align 8
 VAR_vault:
 	.space 8
+	.globl	vaultdata
+	.align 8
+vaultdata:
+	.space 8
+	.globl	vaultnum
+	.align 8
+vaultnum:
+	.space 8
 	.globl	var_current
 	.align 8
 var_current:
+	.space 8
+	.globl	var_currentstack
+	.align 8
+var_currentstack:
 	.space 8
 	.globl	var_stackcount
 	.align 8
@@ -94,82 +106,94 @@ var_find:
 	.seh_pushreg	%rbp
 	movq	%rsp, %rbp
 	.seh_setframe	%rbp, 0
-	subq	$48, %rsp
-	.seh_stackalloc	48
+	subq	$80, %rsp
+	.seh_stackalloc	80
 	.seh_endprologue
 	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
 	cmpq	$0, 16(%rbp)
 	jne	.L6
 	movl	$0, %eax
 	jmp	.L7
 .L6:
+	cmpq	$0, 24(%rbp)
+	jne	.L8
 	movq	VAR_vault(%rip), %rax
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rax
-	movl	8(%rax), %eax
-	movl	%eax, -16(%rbp)
-.L12:
-	movl	$0, -12(%rbp)
-	jmp	.L8
-.L11:
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
+	movq	%rax, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	vaultnum(%rip), %rax
 	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, -8(%rbp)
+	movq	vaultdata(%rip), %rax
+	movq	%rax, -16(%rbp)
+	jmp	.L9
+.L8:
+	movq	24(%rbp), %rax
+	movq	%rax, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	16(%rax), %rax
+	movq	%rax, -8(%rbp)
+	movq	$1, -16(%rbp)
+.L9:
+	movq	-24(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	-16(%rbp), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, -40(%rbp)
+	movq	$0, -32(%rbp)
+	jmp	.L10
+.L13:
+	movq	-32(%rbp), %rax
+	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-40(%rbp), %rax
 	addq	%rdx, %rax
 	movl	8(%rax), %eax
 	testl	%eax, %eax
-	je	.L13
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
+	je	.L14
+	movq	-32(%rbp), %rax
 	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-40(%rbp), %rax
 	addq	%rdx, %rax
 	movq	(%rax), %rax
 	movq	16(%rbp), %rdx
 	movq	%rax, %rcx
 	call	strcmp
 	testl	%eax, %eax
-	jne	.L10
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
+	jne	.L12
+	movq	-32(%rbp), %rax
 	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-40(%rbp), %rax
 	addq	%rdx, %rax
 	movq	%rax, var_current(%rip)
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
+	movq	-32(%rbp), %rax
 	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	-40(%rbp), %rax
 	addq	%rdx, %rax
 	jmp	.L7
-.L13:
+.L14:
 	nop
+.L12:
+	addq	$1, -32(%rbp)
 .L10:
-	addl	$1, -12(%rbp)
-.L8:
-	movl	-12(%rbp), %eax
-	cmpl	-16(%rbp), %eax
-	jl	.L11
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movq	%rax, -8(%rbp)
-	cmpq	$0, -8(%rbp)
-	jne	.L12
+	movq	-32(%rbp), %rax
+	cmpq	-8(%rbp), %rax
+	jb	.L13
 	movl	$0, %eax
 .L7:
-	addq	$48, %rsp
+	addq	$80, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
-	.section .rdata,"dr"
-.LC1:
-	.ascii "%i\0"
-	.text
 	.globl	var_findempty
 	.def	var_findempty;	.scl	2;	.type	32;	.endef
 	.seh_proc	var_findempty
@@ -178,71 +202,33 @@ var_findempty:
 	.seh_pushreg	%rbp
 	movq	%rsp, %rbp
 	.seh_setframe	%rbp, 0
-	subq	$48, %rsp
-	.seh_stackalloc	48
+	subq	$16, %rsp
+	.seh_stackalloc	16
 	.seh_endprologue
 	movq	%rcx, 16(%rbp)
-	movq	%rdx, 24(%rbp)
-	movq	VAR_vault(%rip), %rax
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rax
-	movl	8(%rax), %eax
-	movl	%eax, -16(%rbp)
-.L15:
-	movl	$0, -12(%rbp)
+	movl	%edx, 24(%rbp)
+	movl	$0, -4(%rbp)
 	jmp	.L16
 .L19:
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
+	movq	16(%rbp), %rax
 	movl	8(%rax), %eax
 	testl	%eax, %eax
 	jne	.L17
-	movq	16(%rbp), %rax
-	movq	-8(%rbp), %rdx
-	movq	%rdx, (%rax)
-	movq	24(%rbp), %rax
-	movl	-12(%rbp), %edx
-	movl	%edx, (%rax)
-	movl	-12(%rbp), %eax
-	movl	%eax, %edx
-	leaq	.LC1(%rip), %rcx
-	call	printf
-	movl	$0, %eax
-	jmp	.L21
+	movl	-4(%rbp), %eax
+	cltq
+	jmp	.L18
 .L17:
-	addl	$1, -12(%rbp)
+	addl	$1, -4(%rbp)
 .L16:
-	movl	-12(%rbp), %eax
-	cmpl	-16(%rbp), %eax
+	movl	-4(%rbp), %eax
+	cmpl	24(%rbp), %eax
 	jl	.L19
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	testq	%rax, %rax
-	je	.L20
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movq	%rax, -8(%rbp)
-	jmp	.L15
-.L20:
-	movl	$8, %ecx
-	call	var_makestack
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movq	%rax, -8(%rbp)
-	jmp	.L15
-.L21:
-	addq	$48, %rsp
+	movq	$-1, %rax
+.L18:
+	addq	$16, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
-	.section .rdata,"dr"
-.LC2:
-	.ascii "over\0"
-	.text
 	.globl	var_create
 	.def	var_create;	.scl	2;	.type	32;	.endef
 	.seh_proc	var_create
@@ -255,63 +241,93 @@ var_create:
 	.seh_stackalloc	64
 	.seh_endprologue
 	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	24(%rbp), %rax
+	movq	%rax, %rdx
 	movq	16(%rbp), %rcx
 	call	var_find
 	testq	%rax, %rax
-	je	.L23
+	je	.L21
 	movl	$0, %eax
-	jmp	.L26
-.L23:
-	leaq	-28(%rbp), %rdx
-	leaq	-24(%rbp), %rax
+	jmp	.L22
+.L21:
+	cmpq	$0, 24(%rbp)
+	jne	.L23
+	movq	VAR_vault(%rip), %rax
+	movq	%rax, 24(%rbp)
+	movq	vaultdata(%rip), %rax
+	movl	%eax, -4(%rbp)
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	vaultnum(%rip), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, -24(%rbp)
+	movq	-24(%rbp), %rax
+	movl	%eax, %edx
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rcx
+	movq	vaultdata(%rip), %rax
+	salq	$5, %rax
+	addq	%rcx, %rax
+	movq	16(%rax), %rax
 	movq	%rax, %rcx
 	call	var_findempty
+	movq	%rax, -16(%rbp)
+	jmp	.L24
+.L23:
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	16(%rax), %rax
+	movq	%rax, -24(%rbp)
+	movl	$1, -4(%rbp)
 	movq	-24(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-28(%rbp), %eax
+	movl	%eax, %edx
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rcx
+	movl	-4(%rbp), %eax
+	cltq
+	salq	$5, %rax
+	addq	%rcx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	var_findempty
+	movq	%rax, -16(%rbp)
+.L24:
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rdx
+	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	%rax, -8(%rbp)
-	movq	-8(%rbp), %rax
-	movl	$88, 8(%rax)
-	movl	-28(%rbp), %eax
-	testl	%eax, %eax
-	jne	.L25
-	movq	-8(%rbp), %rax
-	movl	8(%rax), %eax
-	movl	%eax, %edx
-	leaq	.LC1(%rip), %rcx
-	call	printf
-.L25:
+	movq	16(%rax), %rdx
+	movq	-16(%rbp), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	%rax, -32(%rbp)
 	movq	16(%rbp), %rcx
-	call	strlen
-	addq	$1, %rax
-	movq	%rax, %rcx
-	call	malloc
-	movq	%rax, -16(%rbp)
-	leaq	.LC2(%rip), %rcx
-	call	printf
-	movq	-8(%rbp), %rax
-	movq	-16(%rbp), %rdx
+	call	strdup
+	movq	%rax, %rdx
+	movq	-32(%rbp), %rax
 	movq	%rdx, (%rax)
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rax
-	movq	16(%rbp), %rdx
-	movq	%rax, %rcx
-	call	strcpy
-	movq	-8(%rbp), %rax
+	movq	-32(%rbp), %rax
 	movl	$1, 8(%rax)
-	movq	-8(%rbp), %rax
+	movq	-32(%rbp), %rax
 	movl	$0, 12(%rax)
-	movq	-8(%rbp), %rax
+	movq	-32(%rbp), %rax
 	movq	$0, 16(%rax)
-	movq	-8(%rbp), %rax
+	movq	-32(%rbp), %rax
 	movq	$0, 24(%rax)
-	movq	-8(%rbp), %rax
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	16(%rax), %rdx
+	addq	$1, %rdx
+	movq	%rdx, 16(%rax)
+	movq	-32(%rbp), %rax
 	movq	%rax, var_current(%rip)
-	movq	-8(%rbp), %rax
-.L26:
+	movq	-32(%rbp), %rax
+.L22:
 	addq	$64, %rsp
 	popq	%rbp
 	ret
@@ -333,13 +349,13 @@ var_findprop:
 	movq	24(%rax), %rax
 	movl	%eax, -8(%rbp)
 	cmpl	$0, -8(%rbp)
-	jne	.L28
-	movl	$-1, %eax
-	jmp	.L29
-.L28:
+	jne	.L26
+	movl	$0, %eax
+	jmp	.L27
+.L26:
 	movl	$0, -4(%rbp)
-	jmp	.L30
-.L32:
+	jmp	.L28
+.L30:
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
@@ -351,18 +367,135 @@ var_findprop:
 	movq	%rax, %rcx
 	call	strcmp
 	testl	%eax, %eax
-	jne	.L31
+	jne	.L29
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
-	jmp	.L29
-.L31:
+	cltq
+	salq	$5, %rax
+	addq	%rdx, %rax
+	jmp	.L27
+.L29:
 	addl	$1, -4(%rbp)
-.L30:
+.L28:
 	movl	-4(%rbp), %eax
 	cmpl	-8(%rbp), %eax
-	jl	.L32
-	movl	$-1, %eax
-.L29:
+	jl	.L30
+	movl	$0, %eax
+.L27:
 	addq	$48, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.globl	var_writeprop
+	.def	var_writeprop;	.scl	2;	.type	32;	.endef
+	.seh_proc	var_writeprop
+var_writeprop:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$80, %rsp
+	.seh_stackalloc	80
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	cmpq	$0, 24(%rbp)
+	jne	.L32
+	movl	$-1, %eax
+	jmp	.L33
+.L32:
+	cmpq	$0, 16(%rbp)
+	jne	.L34
+	movq	var_current(%rip), %rax
+	movq	%rax, 16(%rbp)
+.L34:
+	movq	16(%rbp), %rax
+	movq	%rax, var_current(%rip)
+	movq	24(%rbp), %rax
+	movq	(%rax), %rax
+	movq	%rax, -16(%rbp)
+	movq	24(%rbp), %rax
+	movq	8(%rax), %rax
+	movq	%rax, -24(%rbp)
+	movq	24(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, -32(%rbp)
+	movq	-16(%rbp), %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rcx
+	call	var_findprop
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	jne	.L35
+	movq	$0, -40(%rbp)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	testq	%rax, %rax
+	jne	.L36
+	movl	$32, %ecx
+	call	malloc
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 16(%rax)
+	jmp	.L37
+.L36:
+	movq	16(%rbp), %rax
+	movq	24(%rax), %rax
+	addq	$1, %rax
+	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	%rax, %rcx
+	call	realloc
+	movq	%rax, -40(%rbp)
+	movq	16(%rbp), %rax
+	movq	-40(%rbp), %rdx
+	movq	%rdx, 16(%rax)
+.L37:
+	movq	16(%rbp), %rax
+	movq	24(%rax), %rax
+	leaq	1(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	%rdx, 24(%rax)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	16(%rbp), %rax
+	movq	24(%rax), %rax
+	salq	$5, %rax
+	subq	$32, %rax
+	addq	%rdx, %rax
+	movq	%rax, -8(%rbp)
+.L35:
+	movq	-8(%rbp), %rcx
+	movq	24(%rbp), %r8
+	movq	(%r8), %rax
+	movq	8(%r8), %rdx
+	movq	%rax, (%rcx)
+	movq	%rdx, 8(%rcx)
+	movq	16(%r8), %rax
+	movq	24(%r8), %rdx
+	movq	%rax, 16(%rcx)
+	movq	%rdx, 24(%rcx)
+	movq	24(%rbp), %rax
+	movl	28(%rax), %eax
+	cmpl	$-2, %eax
+	jne	.L38
+	movq	24(%rbp), %rax
+	movl	$0, %r8d
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	prop_edit
+.L38:
+	movq	16(%rbp), %rax
+	movl	12(%rax), %eax
+	leal	1(%rax), %edx
+	movq	16(%rbp), %rax
+	movl	%edx, 12(%rax)
+	movl	$0, %eax
+.L33:
+	addq	$80, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
@@ -372,312 +505,130 @@ var_findprop:
 var_write:
 	pushq	%rbp
 	.seh_pushreg	%rbp
-	pushq	%rbx
-	.seh_pushreg	%rbx
-	subq	$56, %rsp
-	.seh_stackalloc	56
-	leaq	128(%rsp), %rbp
-	.seh_setframe	%rbp, 128
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$48, %rsp
+	.seh_stackalloc	48
 	.seh_endprologue
-	movq	%rcx, -48(%rbp)
-	movq	%rdx, -40(%rbp)
-	movq	%r8, -32(%rbp)
-	movl	%r9d, -24(%rbp)
-	cmpq	$0, -40(%rbp)
-	je	.L34
-	cmpq	$0, -32(%rbp)
-	je	.L34
-	cmpl	$0, -24(%rbp)
-	jne	.L35
-.L34:
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	movq	%r8, 32(%rbp)
+	movq	%r9, 40(%rbp)
+	cmpq	$0, 24(%rbp)
+	jne	.L40
 	movl	$-1, %eax
-	jmp	.L36
-.L35:
-	cmpq	$0, -48(%rbp)
-	jne	.L37
+	jmp	.L41
+.L40:
+	cmpq	$0, 16(%rbp)
+	jne	.L42
 	movq	var_current(%rip), %rax
-	movq	%rax, -48(%rbp)
-.L37:
-	movq	-40(%rbp), %rax
+	movq	%rax, 16(%rbp)
+.L42:
+	movq	16(%rbp), %rax
+	movq	%rax, var_current(%rip)
+	movq	24(%rbp), %rax
 	movq	%rax, %rdx
-	movq	-48(%rbp), %rcx
+	movq	16(%rbp), %rcx
 	call	var_findprop
-	movl	%eax, -84(%rbp)
-	cmpl	$-1, -84(%rbp)
-	jne	.L38
-	movq	-48(%rbp), %rax
-	movq	24(%rax), %rax
-	addq	$1, %rax
-	salq	$5, %rax
-	movq	%rax, %rdx
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rax
-	movq	%rax, %rcx
-	call	realloc
-	movq	-48(%rbp), %rdx
-	movq	%rax, 16(%rdx)
-	movq	-48(%rbp), %rax
-	movq	24(%rax), %rax
-	leaq	1(%rax), %rdx
-	movq	-48(%rbp), %rax
-	movq	%rdx, 24(%rax)
-	movq	-48(%rbp), %rax
-	movq	24(%rax), %rax
-	subl	$1, %eax
-	movl	%eax, -84(%rbp)
-	movq	-40(%rbp), %rax
-	movq	%rax, %rcx
-	call	strlen
-	addq	$1, %rax
-	movq	-48(%rbp), %rdx
-	movq	16(%rdx), %rcx
-	movl	-84(%rbp), %edx
-	movslq	%edx, %rdx
-	salq	$5, %rdx
-	leaq	(%rcx,%rdx), %rbx
-	movq	%rax, %rcx
-	call	malloc
-	movq	%rax, (%rbx)
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	(%rax), %rax
-	movq	-40(%rbp), %rdx
-	movq	%rax, %rcx
-	call	strcpy
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	$0, 16(%rax)
-.L38:
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
+	movq	%rax, -8(%rbp)
+	cmpq	$0, -8(%rbp)
+	jne	.L43
+	movq	$0, -16(%rbp)
+	movq	16(%rbp), %rax
 	movq	16(%rax), %rax
 	testq	%rax, %rax
-	je	.L39
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	8(%rax), %rax
-	movq	%rax, %rcx
-	call	free
-.L39:
-	movl	-24(%rbp), %eax
-	cltq
-	movq	-48(%rbp), %rdx
-	movq	16(%rdx), %rcx
-	movl	-84(%rbp), %edx
-	movslq	%edx, %rdx
-	salq	$5, %rdx
-	leaq	(%rcx,%rdx), %rbx
-	movq	%rax, %rcx
-	call	malloc
-	movq	%rax, 8(%rbx)
-	movl	-24(%rbp), %eax
-	movslq	%eax, %rcx
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	8(%rax), %rax
-	movq	-32(%rbp), %rdx
-	movq	%rcx, %r8
-	movq	%rax, %rcx
-	call	memcpy
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rax, %rdx
-	movl	-24(%rbp), %eax
-	cltq
-	movq	%rax, 16(%rdx)
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movl	$0, 24(%rax)
-	movl	$0, %eax
-.L36:
-	addq	$56, %rsp
-	popq	%rbx
-	popq	%rbp
-	ret
-	.seh_endproc
-	.globl	var_write2
-	.def	var_write2;	.scl	2;	.type	32;	.endef
-	.seh_proc	var_write2
-var_write2:
-	pushq	%rbp
-	.seh_pushreg	%rbp
-	pushq	%rbx
-	.seh_pushreg	%rbx
-	subq	$56, %rsp
-	.seh_stackalloc	56
-	leaq	128(%rsp), %rbp
-	.seh_setframe	%rbp, 128
-	.seh_endprologue
-	movq	%rcx, -48(%rbp)
-	movq	%rdx, -40(%rbp)
-	movq	%r8, -32(%rbp)
-	movl	%r9d, -24(%rbp)
-	cmpq	$0, -40(%rbp)
-	je	.L41
-	cmpq	$0, -32(%rbp)
-	je	.L41
-	cmpl	$0, -24(%rbp)
-	je	.L41
-	cmpl	$0, -16(%rbp)
-	jne	.L42
-.L41:
-	movl	$-1, %eax
-	jmp	.L43
-.L42:
-	cmpq	$0, -48(%rbp)
 	jne	.L44
-	movq	var_current(%rip), %rax
-	movq	%rax, -48(%rbp)
-.L44:
-	movq	-40(%rbp), %rax
+	movl	$32, %ecx
+	call	malloc
 	movq	%rax, %rdx
-	movq	-48(%rbp), %rcx
-	call	var_findprop
-	movl	%eax, -84(%rbp)
-	cmpl	$-1, -84(%rbp)
-	jne	.L45
-	movq	-48(%rbp), %rax
+	movq	16(%rbp), %rax
+	movq	%rdx, 16(%rax)
+	jmp	.L45
+.L44:
+	movq	16(%rbp), %rax
 	movq	24(%rax), %rax
 	addq	$1, %rax
 	salq	$5, %rax
 	movq	%rax, %rdx
-	movq	-48(%rbp), %rax
+	movq	16(%rbp), %rax
 	movq	16(%rax), %rax
 	movq	%rax, %rcx
 	call	realloc
-	movq	-48(%rbp), %rdx
-	movq	%rax, 16(%rdx)
-	movq	-48(%rbp), %rax
+	movq	%rax, -16(%rbp)
+	movq	16(%rbp), %rax
+	movq	-16(%rbp), %rdx
+	movq	%rdx, 16(%rax)
+.L45:
+	movq	16(%rbp), %rax
 	movq	24(%rax), %rax
 	leaq	1(%rax), %rdx
-	movq	-48(%rbp), %rax
+	movq	16(%rbp), %rax
 	movq	%rdx, 24(%rax)
-	movq	-48(%rbp), %rax
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movq	16(%rbp), %rax
 	movq	24(%rax), %rax
-	subl	$1, %eax
-	movl	%eax, -84(%rbp)
-	movq	-40(%rbp), %rax
-	movq	%rax, %rcx
-	call	strlen
-	addq	$1, %rax
-	movq	-48(%rbp), %rdx
-	movq	16(%rdx), %rcx
-	movl	-84(%rbp), %edx
-	movslq	%edx, %rdx
-	salq	$5, %rdx
-	leaq	(%rcx,%rdx), %rbx
-	movq	%rax, %rcx
-	call	malloc
-	movq	%rax, (%rbx)
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
 	salq	$5, %rax
+	subq	$32, %rax
 	addq	%rdx, %rax
-	movq	(%rax), %rax
-	movq	-40(%rbp), %rdx
+	movq	%rax, -8(%rbp)
+	movq	24(%rbp), %rax
 	movq	%rax, %rcx
-	call	strcpy
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	$0, 16(%rax)
-.L45:
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	16(%rax), %rax
+	call	strdup
+	movq	%rax, %rdx
+	movq	-8(%rbp), %rax
+	movq	%rdx, (%rax)
+.L43:
+	movq	-8(%rbp), %rax
+	movq	8(%rax), %rax
 	testq	%rax, %rax
 	je	.L46
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	8(%rax), %rax
+	movq	-8(%rbp), %rax
+	movq	16(%rax), %rax
 	movq	%rax, %rcx
 	call	free
+	movq	-8(%rbp), %rax
+	movq	$0, 8(%rax)
 .L46:
-	movl	-24(%rbp), %eax
-	cltq
-	movq	-48(%rbp), %rdx
-	movq	16(%rdx), %rcx
-	movl	-84(%rbp), %edx
-	movslq	%edx, %rdx
-	salq	$5, %rdx
-	leaq	(%rcx,%rdx), %rbx
+	cmpq	$0, 32(%rbp)
+	je	.L47
+	movq	32(%rbp), %rax
 	movq	%rax, %rcx
 	call	malloc
-	movq	%rax, 8(%rbx)
-	movl	-24(%rbp), %eax
-	movslq	%eax, %rcx
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	8(%rax), %rax
-	movq	-32(%rbp), %rdx
+	movq	%rax, %rdx
+	movq	-8(%rbp), %rax
+	movq	%rdx, 16(%rax)
+	movq	-8(%rbp), %rax
+	movq	16(%rax), %rax
+	movq	32(%rbp), %rcx
+	movq	40(%rbp), %rdx
 	movq	%rcx, %r8
 	movq	%rax, %rcx
 	call	memcpy
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rax, %rdx
-	movl	-24(%rbp), %eax
-	cltq
-	movq	%rax, 16(%rdx)
-	movq	-48(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-84(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rax, %rdx
-	movl	-16(%rbp), %eax
-	movl	%eax, 24(%rdx)
+	movq	-8(%rbp), %rax
+	movq	32(%rbp), %rdx
+	movq	%rdx, 8(%rax)
+	jmp	.L48
+.L47:
+	movq	-8(%rbp), %rax
+	movq	40(%rbp), %rdx
+	movq	(%rdx), %rdx
+	movq	%rdx, 16(%rax)
+.L48:
+	movq	-8(%rbp), %rax
+	movl	24(%rax), %eax
+	orl	48(%rbp), %eax
+	movl	%eax, %edx
+	movq	-8(%rbp), %rax
+	movl	%edx, 24(%rax)
+	movq	16(%rbp), %rax
+	movl	12(%rax), %eax
+	leal	1(%rax), %edx
+	movq	16(%rbp), %rax
+	movl	%edx, 12(%rax)
 	movl	$0, %eax
-.L43:
-	addq	$56, %rsp
-	popq	%rbx
+.L41:
+	addq	$48, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
@@ -697,30 +648,30 @@ var_read:
 	movq	%r8, 32(%rbp)
 	movq	%r9, 40(%rbp)
 	cmpq	$0, 24(%rbp)
-	je	.L48
+	je	.L50
 	cmpq	$0, 32(%rbp)
-	je	.L48
+	je	.L50
 	cmpq	$0, 40(%rbp)
-	jne	.L49
-.L48:
-	movl	$-1, %eax
-	jmp	.L50
-.L49:
-	cmpq	$0, 16(%rbp)
 	jne	.L51
+.L50:
+	movl	$-1, %eax
+	jmp	.L52
+.L51:
+	cmpq	$0, 16(%rbp)
+	jne	.L53
 	movq	var_current(%rip), %rax
 	movq	%rax, 16(%rbp)
-.L51:
+.L53:
 	movq	24(%rbp), %rax
 	movq	%rax, %rdx
 	movq	16(%rbp), %rcx
 	call	var_findprop
 	movl	%eax, -4(%rbp)
 	cmpl	$-1, -4(%rbp)
-	jne	.L52
+	jne	.L54
 	movl	$-1, %eax
-	jmp	.L50
-.L52:
+	jmp	.L52
+.L54:
 	movq	40(%rbp), %rax
 	movl	(%rax), %eax
 	movslq	%eax, %rdx
@@ -730,36 +681,36 @@ var_read:
 	cltq
 	salq	$5, %rax
 	addq	%rcx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	cmpq	%rax, %rdx
-	jnb	.L53
+	jnb	.L55
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	movl	%eax, %edx
 	movq	40(%rbp), %rax
 	movl	%edx, (%rax)
 	movl	$-2, %eax
-	jmp	.L50
-.L53:
+	jmp	.L52
+.L55:
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rcx
+	movq	8(%rax), %rcx
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	8(%rax), %rdx
+	movq	16(%rax), %rdx
 	movq	32(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rax, %rcx
@@ -770,12 +721,12 @@ var_read:
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	movl	%eax, %edx
 	movq	40(%rbp), %rax
 	movl	%edx, (%rax)
 	movl	$0, %eax
-.L50:
+.L52:
 	addq	$48, %rsp
 	popq	%rbp
 	ret
@@ -796,32 +747,32 @@ var_read2:
 	movq	%r8, 32(%rbp)
 	movq	%r9, 40(%rbp)
 	cmpq	$0, 24(%rbp)
-	je	.L55
+	je	.L57
 	cmpq	$0, 32(%rbp)
-	je	.L55
+	je	.L57
 	cmpq	$0, 40(%rbp)
-	je	.L55
+	je	.L57
 	cmpq	$0, 48(%rbp)
-	jne	.L56
-.L55:
-	movl	$-1, %eax
-	jmp	.L57
-.L56:
-	cmpq	$0, 16(%rbp)
 	jne	.L58
+.L57:
+	movl	$-1, %eax
+	jmp	.L59
+.L58:
+	cmpq	$0, 16(%rbp)
+	jne	.L60
 	movq	var_current(%rip), %rax
 	movq	%rax, 16(%rbp)
-.L58:
+.L60:
 	movq	24(%rbp), %rax
 	movq	%rax, %rdx
 	movq	16(%rbp), %rcx
 	call	var_findprop
 	movl	%eax, -4(%rbp)
 	cmpl	$-1, -4(%rbp)
-	jne	.L59
+	jne	.L61
 	movl	$-1, %eax
-	jmp	.L57
-.L59:
+	jmp	.L59
+.L61:
 	movq	40(%rbp), %rax
 	movl	(%rax), %eax
 	movslq	%eax, %rdx
@@ -831,36 +782,36 @@ var_read2:
 	cltq
 	salq	$5, %rax
 	addq	%rcx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	cmpq	%rax, %rdx
-	jnb	.L60
+	jnb	.L62
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	movl	%eax, %edx
 	movq	40(%rbp), %rax
 	movl	%edx, (%rax)
 	movl	$-2, %eax
-	jmp	.L57
-.L60:
+	jmp	.L59
+.L62:
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rcx
+	movq	8(%rax), %rcx
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	8(%rax), %rdx
+	movq	16(%rax), %rdx
 	movq	32(%rbp), %rax
 	movq	%rcx, %r8
 	movq	%rax, %rcx
@@ -871,7 +822,7 @@ var_read2:
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rax
+	movq	8(%rax), %rax
 	movl	%eax, %edx
 	movq	40(%rbp), %rax
 	movl	%edx, (%rax)
@@ -885,72 +836,50 @@ var_read2:
 	movq	48(%rbp), %rax
 	movl	%edx, (%rax)
 	movl	$0, %eax
-.L57:
+.L59:
 	addq	$48, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
-	.globl	var_delete
-	.def	var_delete;	.scl	2;	.type	32;	.endef
-	.seh_proc	var_delete
-var_delete:
+	.section .rdata,"dr"
+.LC1:
+	.ascii "(NULL)\0"
+.LC2:
+	.ascii "var name =\11 %s\0"
+.LC3:
+	.ascii "var prop num =\11 %lls\0"
+	.text
+	.globl	var_dump
+	.def	var_dump;	.scl	2;	.type	32;	.endef
+	.seh_proc	var_dump
+var_dump:
 	pushq	%rbp
 	.seh_pushreg	%rbp
 	movq	%rsp, %rbp
 	.seh_setframe	%rbp, 0
-	subq	$48, %rsp
-	.seh_stackalloc	48
+	subq	$32, %rsp
+	.seh_stackalloc	32
 	.seh_endprologue
 	movq	%rcx, 16(%rbp)
 	cmpq	$0, 16(%rbp)
-	jne	.L62
-	movq	var_current(%rip), %rax
-	movq	%rax, -8(%rbp)
+	jne	.L64
+	leaq	.LC1(%rip), %rcx
+	call	printf
 	jmp	.L63
-.L62:
-	movq	16(%rbp), %rcx
-	call	var_find
-	movq	%rax, -8(%rbp)
-	cmpq	$0, -8(%rbp)
-	jne	.L63
-	movl	$-1, %eax
-	jmp	.L64
-.L63:
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movl	%eax, -16(%rbp)
-	movl	$0, -12(%rbp)
-	jmp	.L65
-.L66:
-	movq	-8(%rbp), %rax
-	movq	16(%rax), %rdx
-	movl	-12(%rbp), %eax
-	cltq
-	salq	$5, %rax
-	addq	%rdx, %rax
-	movq	8(%rax), %rax
-	movq	%rax, %rcx
-	call	free
-	addl	$1, -12(%rbp)
-.L65:
-	movl	-12(%rbp), %eax
-	cmpl	-16(%rbp), %eax
-	jl	.L66
-	movq	-8(%rbp), %rax
-	movq	16(%rax), %rax
-	movq	%rax, %rcx
-	call	free
-	movq	-8(%rbp), %rax
-	movq	(%rax), %rax
-	movq	%rax, %rcx
-	call	free
-	movq	-8(%rbp), %rax
-	movq	$0, 24(%rax)
-	movq	-8(%rbp), %rax
-	movl	$0, 8(%rax)
-	movl	$0, %eax
 .L64:
-	addq	$48, %rsp
+	movq	16(%rbp), %rax
+	movq	(%rax), %rax
+	movq	%rax, %rdx
+	leaq	.LC2(%rip), %rcx
+	call	printf
+	movq	16(%rbp), %rax
+	movq	24(%rax), %rax
+	movq	%rax, %rdx
+	leaq	.LC3(%rip), %rcx
+	call	printf
+	nop
+.L63:
+	addq	$32, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
@@ -966,30 +895,27 @@ var_setvarnum0:
 	.seh_stackalloc	16
 	.seh_endprologue
 	movq	%rcx, 16(%rbp)
-	movl	$0, -4(%rbp)
-	jmp	.L68
-.L69:
-	movq	16(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-4(%rbp), %eax
-	cltq
+	movq	%rdx, 24(%rbp)
+	movq	$0, -8(%rbp)
+	jmp	.L67
+.L68:
+	movq	-8(%rbp), %rax
 	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
 	addq	%rdx, %rax
 	movl	$0, 8(%rax)
-	movq	16(%rbp), %rax
-	movq	(%rax), %rdx
-	movl	-4(%rbp), %eax
-	cltq
+	movq	-8(%rbp), %rax
 	salq	$5, %rax
+	movq	%rax, %rdx
+	movq	16(%rbp), %rax
 	addq	%rdx, %rax
 	movq	$0, (%rax)
-	addl	$1, -4(%rbp)
-.L68:
-	movq	16(%rbp), %rax
-	movl	8(%rax), %edx
-	movl	-4(%rbp), %eax
-	cmpl	%eax, %edx
-	ja	.L69
+	addq	$1, -8(%rbp)
+.L67:
+	movq	-8(%rbp), %rax
+	cmpq	24(%rbp), %rax
+	jb	.L68
 	nop
 	nop
 	addq	$16, %rsp
@@ -997,111 +923,401 @@ var_setvarnum0:
 	ret
 	.seh_endproc
 	.section .rdata,"dr"
-.LC3:
-	.ascii "make stack\0"
+.LC4:
+	.ascii "var_vault\0"
+.LC5:
+	.ascii "var_num\0"
+.LC6:
+	.ascii "type\0"
+.LC7:
+	.ascii "var_stack\0"
+.LC8:
+	.ascii "data\0"
 	.text
-	.globl	var_makestack
-	.def	var_makestack;	.scl	2;	.type	32;	.endef
-	.seh_proc	var_makestack
-var_makestack:
-	pushq	%rbp
-	.seh_pushreg	%rbp
-	movq	%rsp, %rbp
-	.seh_setframe	%rbp, 0
-	subq	$64, %rsp
-	.seh_stackalloc	64
-	.seh_endprologue
-	movl	%ecx, 16(%rbp)
-	movq	VAR_vault(%rip), %rax
-	movq	%rax, -8(%rbp)
-	movl	$1, -12(%rbp)
-	movl	$1, -12(%rbp)
-	jmp	.L71
-.L72:
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movq	%rax, -8(%rbp)
-	addl	$1, -12(%rbp)
-.L71:
-	movl	-12(%rbp), %eax
-	movslq	%eax, %rdx
-	movq	var_stackcount(%rip), %rax
-	cmpq	%rax, %rdx
-	jb	.L72
-	movl	$32, %ecx
-	call	malloc
-	movq	%rax, %rdx
-	movq	-8(%rbp), %rax
-	movq	%rdx, 24(%rax)
-	movq	-8(%rbp), %rax
-	movq	24(%rax), %rax
-	movq	%rax, -24(%rbp)
-	movl	-12(%rbp), %edx
-	movq	-24(%rbp), %rax
-	movl	%edx, 12(%rax)
-	movq	-24(%rbp), %rax
-	movq	$0, 24(%rax)
-	movq	-24(%rbp), %rax
-	movq	-8(%rbp), %rdx
-	movq	%rdx, 16(%rax)
-	movl	16(%rbp), %eax
-	salq	$3, %rax
-	movq	%rax, %rcx
-	call	malloc
-	movq	%rax, %rdx
-	movq	-24(%rbp), %rax
-	movq	%rdx, (%rax)
-	movq	-24(%rbp), %rax
-	movl	16(%rbp), %edx
-	movl	%edx, 8(%rax)
-	movq	-24(%rbp), %rax
-	movq	%rax, %rcx
-	call	var_setvarnum0
-	movq	var_stackcount(%rip), %rax
-	addq	$1, %rax
-	movq	%rax, var_stackcount(%rip)
-	leaq	.LC3(%rip), %rcx
-	call	printf
-	nop
-	addq	$64, %rsp
-	popq	%rbp
-	ret
-	.seh_endproc
-	.globl	variableinit
-	.def	variableinit;	.scl	2;	.type	32;	.endef
-	.seh_proc	variableinit
-variableinit:
+	.globl	var_init
+	.def	var_init;	.scl	2;	.type	32;	.endef
+	.seh_proc	var_init
+var_init:
 	pushq	%rbp
 	.seh_pushreg	%rbp
 	pushq	%rbx
 	.seh_pushreg	%rbx
-	subq	$40, %rsp
-	.seh_stackalloc	40
+	subq	$56, %rsp
+	.seh_stackalloc	56
 	leaq	128(%rsp), %rbp
 	.seh_setframe	%rbp, 128
 	.seh_endprologue
+	movq	%rcx, -48(%rbp)
 	movl	$32, %ecx
 	call	malloc
 	movq	%rax, VAR_vault(%rip)
-	movq	VAR_vault(%rip), %rax
-	movl	$0, 12(%rax)
-	movq	VAR_vault(%rip), %rax
-	movq	$0, 24(%rax)
-	movq	VAR_vault(%rip), %rax
-	movq	$0, 16(%rax)
 	movq	VAR_vault(%rip), %rbx
-	movl	$256, %ecx
-	call	malloc
+	leaq	.LC4(%rip), %rcx
+	call	strdup
 	movq	%rax, (%rbx)
 	movq	VAR_vault(%rip), %rax
-	movl	$8, 8(%rax)
+	movl	$1, 8(%rax)
+	movq	$0, vaultnum(%rip)
+	movq	$1, vaultdata(%rip)
+	movq	VAR_vault(%rip), %rbx
+	movl	$96, %ecx
+	call	malloc
+	movq	%rax, 16(%rbx)
 	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rdx
+	movq	vaultnum(%rip), %rax
+	salq	$5, %rax
+	leaq	(%rdx,%rax), %rbx
+	leaq	.LC5(%rip), %rcx
+	call	strdup
+	movq	%rax, (%rbx)
+	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rdx
+	movq	vaultnum(%rip), %rax
+	salq	$5, %rax
+	addq	%rax, %rdx
+	movq	-48(%rbp), %rax
+	movq	%rax, 16(%rdx)
+	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rax
+	leaq	64(%rax), %rbx
+	leaq	.LC6(%rip), %rcx
+	call	strdup
+	movq	%rax, (%rbx)
+	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rax
+	leaq	64(%rax), %rbx
+	leaq	.LC7(%rip), %rcx
+	call	strdup
+	movq	%rax, 16(%rbx)
+	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rdx
+	movq	vaultdata(%rip), %rax
+	salq	$5, %rax
+	leaq	(%rdx,%rax), %rbx
+	leaq	.LC8(%rip), %rcx
+	call	strdup
+	movq	%rax, (%rbx)
+	movq	-48(%rbp), %rax
+	salq	$5, %rax
+	movq	VAR_vault(%rip), %rdx
+	movq	16(%rdx), %rcx
+	movq	vaultdata(%rip), %rdx
+	salq	$5, %rdx
+	leaq	(%rcx,%rdx), %rbx
+	movq	%rax, %rcx
+	call	malloc
+	movq	%rax, 16(%rbx)
+	movq	VAR_vault(%rip), %rax
+	movq	16(%rax), %rdx
+	movq	vaultdata(%rip), %rax
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	16(%rax), %rax
+	movq	%rax, -88(%rbp)
+	movq	-88(%rbp), %rax
+	movq	-48(%rbp), %rdx
 	movq	%rax, %rcx
 	call	var_setvarnum0
-	movq	$1, var_stackcount(%rip)
 	nop
-	addq	$40, %rsp
+	addq	$56, %rsp
 	popq	%rbx
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC9:
+	.ascii "rb\0"
+.LC10:
+	.ascii "var \0"
+	.text
+	.globl	var_open
+	.def	var_open;	.scl	2;	.type	32;	.endef
+	.seh_proc	var_open
+var_open:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	subq	$3120, %rsp
+	.seh_stackalloc	3120
+	leaq	128(%rsp), %rbp
+	.seh_setframe	%rbp, 128
+	.seh_endprologue
+	movq	%rcx, 3008(%rbp)
+	movq	%rdx, 3016(%rbp)
+	movl	$0, 2956(%rbp)
+	movl	$0, 2952(%rbp)
+	movl	$0, 2948(%rbp)
+	leaq	.LC9(%rip), %rdx
+	movq	3008(%rbp), %rcx
+	call	fopen
+	movq	%rax, 2976(%rbp)
+	cmpq	$0, 2976(%rbp)
+	jne	.L71
+	movl	$0, %eax
+	jmp	.L76
+.L71:
+	movq	2976(%rbp), %rdx
+	leaq	1936(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$4, %r8d
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fread
+	leaq	1936(%rbp), %rax
+	movl	$4, %r8d
+	leaq	.LC10(%rip), %rdx
+	movq	%rax, %rcx
+	call	strncmp
+	movl	%eax, 2972(%rbp)
+	cmpl	$0, 2972(%rbp)
+	je	.L73
+	movl	$0, %eax
+	jmp	.L76
+.L73:
+	movq	2976(%rbp), %rdx
+	leaq	2956(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fread
+	movq	2976(%rbp), %rdx
+	leaq	2952(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fread
+	movl	2952(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	2976(%rbp), %rcx
+	leaq	1936(%rbp), %rax
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fread
+	movq	3016(%rbp), %rdx
+	leaq	1936(%rbp), %rax
+	movq	%rax, %rcx
+	call	var_create
+	movq	%rax, 2960(%rbp)
+	movq	2976(%rbp), %rdx
+	leaq	2948(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fread
+	movl	$0, -84(%rbp)
+	movl	$0, -88(%rbp)
+	movl	$0, 2988(%rbp)
+	jmp	.L74
+.L75:
+	movq	2976(%rbp), %rdx
+	leaq	-84(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fread
+	movl	-84(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	2976(%rbp), %rcx
+	leaq	928(%rbp), %rax
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fread
+	movq	2976(%rbp), %rdx
+	leaq	-88(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fread
+	movl	-88(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	2976(%rbp), %rcx
+	leaq	-80(%rbp), %rax
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fread
+	addl	$1, 2988(%rbp)
+.L74:
+	movl	2948(%rbp), %eax
+	cmpl	%eax, 2988(%rbp)
+	jl	.L75
+	movq	2960(%rbp), %rax
+	movq	%rax, var_current(%rip)
+	movq	2976(%rbp), %rax
+	movq	%rax, %rcx
+	call	fclose
+	movq	2960(%rbp), %rax
+.L76:
+	addq	$3120, %rsp
+	popq	%rbp
+	ret
+	.seh_endproc
+	.section .rdata,"dr"
+.LC11:
+	.ascii "wb\0"
+	.text
+	.globl	var_save
+	.def	var_save;	.scl	2;	.type	32;	.endef
+	.seh_proc	var_save
+var_save:
+	pushq	%rbp
+	.seh_pushreg	%rbp
+	movq	%rsp, %rbp
+	.seh_setframe	%rbp, 0
+	subq	$80, %rsp
+	.seh_stackalloc	80
+	.seh_endprologue
+	movq	%rcx, 16(%rbp)
+	movq	%rdx, 24(%rbp)
+	cmpq	$0, 16(%rbp)
+	jne	.L78
+	movq	var_current(%rip), %rax
+	movq	%rax, 16(%rbp)
+.L78:
+	movq	24(%rbp), %rax
+	leaq	.LC11(%rip), %rdx
+	movq	%rax, %rcx
+	call	fopen
+	movq	%rax, -16(%rbp)
+	cmpq	$0, -16(%rbp)
+	jne	.L79
+	movl	$1, %eax
+	jmp	.L83
+.L79:
+	movl	$1, -20(%rbp)
+	movq	-16(%rbp), %rax
+	movq	%rax, %r9
+	movl	$4, %r8d
+	movl	$1, %edx
+	leaq	.LC10(%rip), %rcx
+	call	fwrite
+	movq	-16(%rbp), %rdx
+	leaq	-20(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movq	16(%rbp), %rax
+	movq	(%rax), %rax
+	movq	%rax, %rcx
+	call	strlen
+	addl	$1, %eax
+	movl	%eax, -24(%rbp)
+	movq	-16(%rbp), %rdx
+	leaq	-24(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movl	-24(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	16(%rbp), %rax
+	movq	(%rax), %rax
+	movq	-16(%rbp), %rcx
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movq	16(%rbp), %rax
+	movq	24(%rax), %rax
+	movl	%eax, -28(%rbp)
+	movq	-16(%rbp), %rdx
+	leaq	-28(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movl	$0, -4(%rbp)
+	jmp	.L81
+.L82:
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movl	-4(%rbp), %eax
+	cltq
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	(%rax), %rax
+	movq	%rax, %rcx
+	call	strlen
+	addl	$1, %eax
+	movl	%eax, -32(%rbp)
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rdx
+	movl	-4(%rbp), %eax
+	cltq
+	salq	$5, %rax
+	addq	%rdx, %rax
+	movq	8(%rax), %rax
+	movl	%eax, -36(%rbp)
+	movq	-16(%rbp), %rdx
+	leaq	-32(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movl	-32(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rcx
+	movl	-4(%rbp), %eax
+	cltq
+	salq	$5, %rax
+	addq	%rcx, %rax
+	movq	(%rax), %rax
+	movq	-16(%rbp), %rcx
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movq	-16(%rbp), %rdx
+	leaq	-36(%rbp), %rax
+	movq	%rdx, %r9
+	movl	$1, %r8d
+	movl	$4, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	movl	-36(%rbp), %eax
+	movslq	%eax, %rdx
+	movq	16(%rbp), %rax
+	movq	16(%rax), %rcx
+	movl	-4(%rbp), %eax
+	cltq
+	salq	$5, %rax
+	addq	%rcx, %rax
+	movq	16(%rax), %rax
+	movq	-16(%rbp), %rcx
+	movq	%rcx, %r9
+	movq	%rdx, %r8
+	movl	$1, %edx
+	movq	%rax, %rcx
+	call	fwrite
+	addl	$1, -4(%rbp)
+.L81:
+	movl	-28(%rbp), %eax
+	cmpl	%eax, -4(%rbp)
+	jl	.L82
+	movq	-16(%rbp), %rax
+	movq	%rax, %rcx
+	call	fclose
+	movl	$0, %eax
+.L83:
+	addq	$80, %rsp
 	popq	%rbp
 	ret
 	.seh_endproc
@@ -1119,28 +1335,28 @@ var_datagetlength:
 	movq	%rcx, 16(%rbp)
 	movq	%rdx, 24(%rbp)
 	cmpq	$0, 16(%rbp)
-	jne	.L75
+	jne	.L85
 	movq	var_current(%rip), %rax
 	movq	%rax, 16(%rbp)
-.L75:
+.L85:
 	movq	24(%rbp), %rax
 	movq	%rax, %rdx
 	movq	16(%rbp), %rcx
 	call	var_findprop
 	movl	%eax, -4(%rbp)
 	cmpl	$-1, -4(%rbp)
-	jne	.L76
+	jne	.L86
 	movl	$0, %eax
-	jmp	.L77
-.L76:
+	jmp	.L87
+.L86:
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
 	cltq
 	salq	$5, %rax
 	addq	%rdx, %rax
-	movq	16(%rax), %rax
-.L77:
+	movq	8(%rax), %rax
+.L87:
 	addq	$48, %rsp
 	popq	%rbp
 	ret
@@ -1159,20 +1375,20 @@ var_datagettype:
 	movq	%rcx, 16(%rbp)
 	movq	%rdx, 24(%rbp)
 	cmpq	$0, 16(%rbp)
-	jne	.L79
+	jne	.L89
 	movq	var_current(%rip), %rax
 	movq	%rax, 16(%rbp)
-.L79:
+.L89:
 	movq	24(%rbp), %rax
 	movq	%rax, %rdx
 	movq	16(%rbp), %rcx
 	call	var_findprop
 	movl	%eax, -4(%rbp)
 	cmpl	$-1, -4(%rbp)
-	jne	.L80
+	jne	.L90
 	movl	$0, %eax
-	jmp	.L81
-.L80:
+	jmp	.L91
+.L90:
 	movq	16(%rbp), %rax
 	movq	16(%rax), %rdx
 	movl	-4(%rbp), %eax
@@ -1180,7 +1396,7 @@ var_datagettype:
 	salq	$5, %rax
 	addq	%rdx, %rax
 	movl	24(%rax), %eax
-.L81:
+.L91:
 	addq	$48, %rsp
 	popq	%rbp
 	ret
@@ -1199,15 +1415,15 @@ var_varsetname:
 	movq	%rcx, 16(%rbp)
 	movq	%rdx, 24(%rbp)
 	cmpq	$0, 24(%rbp)
-	jne	.L83
+	jne	.L93
 	movl	$-1, %eax
-	jmp	.L84
-.L83:
+	jmp	.L94
+.L93:
 	cmpq	$0, 16(%rbp)
-	jne	.L85
+	jne	.L95
 	movq	var_current(%rip), %rax
 	movq	%rax, 16(%rbp)
-.L85:
+.L95:
 	movq	16(%rbp), %rax
 	movq	(%rax), %rax
 	movq	%rax, %rcx
@@ -1227,7 +1443,7 @@ var_varsetname:
 	movq	%rax, %rcx
 	call	strcpy
 	movl	$0, %eax
-.L84:
+.L94:
 	addq	$32, %rsp
 	popq	%rbp
 	ret
@@ -1238,6 +1454,13 @@ var_varsetname:
 	.def	memcpy;	.scl	2;	.type	32;	.endef
 	.def	free;	.scl	2;	.type	32;	.endef
 	.def	strcmp;	.scl	2;	.type	32;	.endef
+	.def	strdup;	.scl	2;	.type	32;	.endef
+	.def	realloc;	.scl	2;	.type	32;	.endef
+	.def	prop_edit;	.scl	2;	.type	32;	.endef
+	.def	fopen;	.scl	2;	.type	32;	.endef
+	.def	fread;	.scl	2;	.type	32;	.endef
+	.def	strncmp;	.scl	2;	.type	32;	.endef
+	.def	fclose;	.scl	2;	.type	32;	.endef
+	.def	fwrite;	.scl	2;	.type	32;	.endef
 	.def	strlen;	.scl	2;	.type	32;	.endef
 	.def	strcpy;	.scl	2;	.type	32;	.endef
-	.def	realloc;	.scl	2;	.type	32;	.endef

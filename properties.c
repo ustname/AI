@@ -10,6 +10,7 @@ PROP* prop_create(char* name)
     prop->length = 0;
     prop->data.byte64 = 0;
     prop->type = 0;
+    prop->code = PROP_CODE_USED;
 
 
     return prop;
@@ -46,7 +47,7 @@ int prop_edit(PROP* prop, int code, V_DATA* data)
         case PROP_EDIT_CLEAN:
         prop->name = 0;
         prop->type = 0;
-        prop->code = PROP_CODE_EMPTY & 0;
+        prop->code = PROP_CODE_EMPTY;
         prop->data.byte64 = 0;
         prop->length = 0;
         break;

@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <memory.h>
+#include <errno.h>
 
 #ifndef DATAHANDLE__H
 #define DATAHANDLE__H
@@ -88,5 +89,18 @@ typedef struct VAR
     uint64_t prop_num;
 
 }VAR;
+
+//void debug(int code)
+//{
+//    printf("exit with code %i", code);
+//    exit(code);
+//}
+
+//extern int64_t errnum = 0;
+
+enum ERROR_CODE{
+    ERR_NONE = 0,
+    ERR_STACKISFULL,
+};
 
 #endif

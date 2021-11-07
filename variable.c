@@ -60,6 +60,9 @@ VAR* var_find(char* name, VAR* var_stack)
     {
         return 0;
     }
+    //else 
+    
+    //printf("%p ", var_findprop(var_stack, "type")); exit(0);
 
     uint64_t limit;
     int64_t location;
@@ -69,21 +72,25 @@ VAR* var_find(char* name, VAR* var_stack)
     if(var_stack == 0)
     {
         varv = VAR_vault;
-        limit = varv->prop[vaultnum].data.byte64;
-        location = vaultdata;
+        //limit = varv->prop[vaultnum].data.byte64;
+        //location = vaultdata;
     }else
     {
         varv = var_stack;
         //result = location = var_findprop(varv, "var_num");printf("find error %i", result);
-        limit = varv->prop[0].data.byte64;
-        location = 1;
-        //result = location = var_findprop(varv, "data");
+        //limit = varv->prop[0].data.byte64;
+        //location = 1;
+        //result = location = //varv->prop[location].data.var;
     }
-    
-    VAR* varp = varv->prop[location].data.var;
+    if ( !strncmp( var_findprop(varv, "type")->data.cp, "var_stack", 9 ) )
+    {
+        return 0;
+    }
+    limit = var_findprop(varv, "var_num")->data.byte64;
+    VAR* varp = var_findprop(varv, "data")->data.var;
     
     for (uint64_t i = 0; i < limit; i++)
-    {//printf("%i ", varp[i].flags);
+    {//printf("%i, ", varp[i].flags);
         if(varp[i].flags == 0) continue;
         //printf("%s %s\n", varp[i].name, name);
         if(strcmp(varp[i].name, name) == 0)
@@ -92,7 +99,7 @@ VAR* var_find(char* name, VAR* var_stack)
             return &varp[i];
         }
     }
-//printf("find error");
+    
     return 0;
 }
 
@@ -169,6 +176,13 @@ VAR* var_create(char* name, VAR* var_stack)
         location = 1;
         index = var_findempty(var_stack->prop[location].data.var, limit);
     }
+
+    if (index == -1)
+    {
+        //errnum = ERR_STACKISFULL;
+        return 0;
+    }
+    
     
     //printf("index = %i ", index);
 
@@ -180,7 +194,7 @@ VAR* var_create(char* name, VAR* var_stack)
     var->prop_num = 0;
 
     var_stack->prop[0].data.byte64++;
-
+//printf("exit", limit); exit(0);
     var_current = var;
     return var;
 }
@@ -251,6 +265,7 @@ int var_writeprop(VAR* var, PROP* prop)
     if (prop->code == PROP_CODE_CLEANAFTERWRITE)
     {
         prop_edit(prop, PROP_EDIT_CLEAN, 0);
+
     }
 
     var->version++;
@@ -269,8 +284,8 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
     }
     var_current = var;
 
-    PROP* prop_dst = var_findprop(var, prop_name);
-    //printf("prop %p\n", prop_dst);
+    PROP* prop_dst = var_findprop(var, prop_name); 
+    
     if(prop_dst == 0) ///   Write new prop
     {
         PROP* Prop = 0;
@@ -288,7 +303,7 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
         prop_dst = &var->prop[var->prop_num - 1]; //printf("prop_dst %p ", prop_dst); 
         
         prop_dst->name = strdup(prop_name);
-        
+        prop_dst->length = 0;
         //prop_index = ;
         //
 
@@ -297,7 +312,7 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
     }
 
     if (prop_dst->length != 0)
-    {
+    {//printf("prop %p\n", prop_dst); exit(0);
         free(prop_dst->data.vd);
         prop_dst->length = 0;
     }
@@ -319,7 +334,7 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
     
     //*prop_dst = *prop;
     var->version++;
-    
+    //printf("find prop %p", prop_dst); exit(0);
     //
     //var->prop[prop_index].data.vd = malloc(length);
     //memcpy(var->prop[prop_index].data.vd, data, length);
@@ -330,7 +345,7 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
     return 0;
 }
 
-
+/*
 int var_read(VAR* var, char* prop_name, void* data, int* length)
 {
     if((prop_name == 0) || (data == 0) || (length == 0))
@@ -392,6 +407,7 @@ int var_read2(VAR* var, char* prop_name, void* data, int* length, int* type)
 
     return 0;
 }
+*/
 
 void var_dump(VAR* var)
 {
@@ -529,6 +545,7 @@ void var_init(uint64_t size)
     VAR_vault = malloc(sizeof(VAR));
     VAR_vault->name = strdup("var_vault");
     VAR_vault->flags = VARENUM_USED;
+    VAR_vault->prop_num = 3;
     vaultnum = 0;
     vaultdata = 1;
     
@@ -636,7 +653,7 @@ int var_save(VAR* var, char* filename)
 
 /// set and get section
 
-
+/*
 uint32_t var_datagetlength(VAR* var, char* prop_name)
 {
     if(var == 0)
@@ -683,4 +700,5 @@ int var_varsetname(VAR* var, char* name)
     var->name = malloc(strlen(name) + 1);
     strcpy(var->name, name);
     return 0;
-}
+} 
+*/
