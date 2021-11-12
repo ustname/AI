@@ -65,12 +65,12 @@ SEN* sen_alloc()
     return sen;
 }
 
-int64_t sen_stop(char* src, char* tok, uint64_t len)
+char* sen_stop(char* src, char* tok, uint64_t len)
 {
     int64_t toklen = 0;
     if (src == 0 || tok == 0)
     {
-        return -2;
+        return 0;
     }
 
     toklen = strlen(tok);
@@ -85,11 +85,11 @@ int64_t sen_stop(char* src, char* tok, uint64_t len)
         for (int j = 0; j < toklen; j++)
         {
             if (src[i] == tok[j])
-                return i;
+                return &src[i];
         }
     }
 
-    return -1;
+    return 0;
 }
 
 char* sen_skip(char* src, char* tok, uint64_t len)
@@ -116,6 +116,29 @@ char* sen_skip(char* src, char* tok, uint64_t len)
         }
         return &src[i];
         sen_skip_loop:
+    }
+
+    return 0;
+}
+
+char* sen_find(char* src, char* tok, uint64_t len)
+{
+    int64_t toklen = 0;
+    if (src == 0 || tok == 0)
+    {
+        return 0;
+    }
+    
+    toklen = strlen(tok);
+    if (len == 0)
+    {
+        len = strlen(src) + 1;
+    }
+    len -= toklen;
+    
+    for (int64_t i = 0; i < len; i++)
+    {
+        if (strncmp(&src[i], tok, toklen) == 0) return &src[i];
     }
 
     return 0;
