@@ -41,7 +41,7 @@ VAR* var_find(char* name, VAR*);
 PROP* var_findprop(VAR* var, char* prop_name);
 
 
-int var_delete(char* name);
+int var_delete(VAR* name);
 
 
 

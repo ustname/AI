@@ -260,13 +260,28 @@ int var_writeprop(VAR* var, PROP* prop)
     }
 
     
-//printf("%s  \n", var->prop[prop_index].name);
-    *prop_dst = *prop;
+    //*prop_dst = *prop;
+    prop_dst->name = strdup(prop->name);
+    if (prop->length != 0)
+    {
+        prop_dst->data.vd = malloc(prop->length);
+        memcpy(prop_dst->data.vd, prop->data.vd, prop->length);
+        prop_dst->length = prop->length;
+    }else
+    {
+        prop_dst->data = prop->data;
+        prop_dst->length = 0;
+    }
+    prop_dst->type = prop->type;
     if (prop->code == PROP_CODE_CLEANAFTERWRITE)
     {
         prop_edit(prop, PROP_EDIT_CLEAN, 0);
-
+        prop_dst->code = 0;
+    }else
+    {
+        prop_dst->code = prop->code;
     }
+    
 
     var->version++;
     return 0;
@@ -304,6 +319,7 @@ int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type
         
         prop_dst->name = strdup(prop_name);
         prop_dst->length = 0;
+        prop_dst->code = PROP_CODE_EMPTY;
         //prop_index = ;
         //
 
@@ -422,38 +438,36 @@ void var_dump(VAR* var)
     
 }
 
-/*
-int var_delete(char* name)
+
+int var_delete(VAR* var)
 {
-    VAR* var;
+    //VAR* var;
     int prop_count;
 
-    if(name == 0)
+    if(var == 0)
     {
         var = var_current;
-    }else
-    {
-        var = var_find2(name);
-        if(var == 0)
-        {
-            return -1;
-        }
     }
     
     prop_count = var->prop_num;
     for (int i = 0; i < prop_count; i++)
     {
-        free(var->prop[i].data.vd);
-    }
-    free(var->prop);
-    free(var->var_name);
+        if(var->prop[i].length == 0) 
+            continue;
 
+        free(var->prop[i].data.vd);
+        var->prop[i].length = 0;
+    }
+    free(var->prop); var->prop = 0;
+    free(var->name); var->name = 0;
+    
     var->prop_num = 0;
     var->flags = VARENUM_NULL;
+    var->version = 0;
 
     return 0;
 }
-
+/*
 int var_delete2(VAR_VAULT* var_stack, char* name)
 {
     VAR* var;

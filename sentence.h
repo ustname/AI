@@ -30,6 +30,10 @@ int sen_close(SEN* sen);
 
 int sen_free(SEN* sen);
 
+int64_t sen_stop(char* src, char* args, uint64_t len);
+
+char* sen_skip(char* src, char* args, uint64_t len);
+
 //int cmd(char*);
 
 #endif
