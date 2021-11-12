@@ -8,9 +8,12 @@ int main()
 {
     //var_init(10);
     
-    char* w = "  8  Hello World";
-    char* pos = sen_find(w, "Wol", 0);
-    printf("%s ", pos);
+    char* w = "  World";
+    char* buf;
+    //memset(buf, 0, 100);
+    //sen_pick(w, 0, buf);
+    buf = sen_end(w) - 1;
+    printf("%c ", *buf);
     printf("done");
     return 0;
 }

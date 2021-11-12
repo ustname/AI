@@ -9,12 +9,12 @@
 #define DATAHANDLE__H
 
 enum DATATYPE{
-    VOID0 = 0,
+    VOID0 = 0, PTR = 1,
     UI8 = 2, UI16 = 4, UI32 = 6, UI64 = 8,
-    SI8 = 3, SI16 = 5, SI32 = 7, SI64 = 9,
-    CHAR = UI8, SHORT = SI16, INT = SI32,
-    CP = 10, IP = 11, FP = 12, DP = 13, VP = 14,
-    SF = 15, DF = 16,
+    SI8 = 10, SI16 = 12, SI32 = 14, SI64 = 16,
+    CHAR = UI8, SHORT = SI16, INT = SI32, SF = 18, DF = 20, 
+    CP = 3, IP = 15, FP = 19, DP = 21, VP = 1,
+    
 };
 
 typedef struct VAR VAR;

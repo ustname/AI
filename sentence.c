@@ -65,7 +65,12 @@ SEN* sen_alloc()
     return sen;
 }
 
-char* sen_stop(char* src, char* tok, uint64_t len)
+char* sen_end(char* src)
+{
+    return src + strlen(src);
+}
+
+char* sen_stop(char* src, char* tok, int64_t len)
 {
     int64_t toklen = 0;
     if (src == 0 || tok == 0)
@@ -92,7 +97,7 @@ char* sen_stop(char* src, char* tok, uint64_t len)
     return 0;
 }
 
-char* sen_skip(char* src, char* tok, uint64_t len)
+char* sen_skip(char* src, char* tok, int64_t len)
 {
     int64_t toklen = 0;
     if (src == 0 || tok == 0)
@@ -121,7 +126,7 @@ char* sen_skip(char* src, char* tok, uint64_t len)
     return 0;
 }
 
-char* sen_find(char* src, char* tok, uint64_t len)
+char* sen_find(char* src, char* tok, int64_t len)
 {
     int64_t toklen = 0;
     if (src == 0 || tok == 0)
@@ -140,6 +145,34 @@ char* sen_find(char* src, char* tok, uint64_t len)
     {
         if (strncmp(&src[i], tok, toklen) == 0) return &src[i];
     }
+
+    return 0;
+}
+
+int sen_pick(char* src, char* tokend, char* buf)
+{
+    if (src == 0 || buf == 0)
+    {
+        return -1;
+    }
+
+    if (tokend == 0)
+    {
+        tokend = " ";
+    }
+
+    char* pos = sen_skip(src, " \n\t", 0);
+    char* end = sen_stop(pos, tokend, 0);//printf("no error %s", end);
+    if (end == 0)
+    {
+        strcpy(buf, pos);
+        return 1;
+    }
+    
+    int64_t len = (int64_t)(end-pos);
+
+    strncpy(buf, pos, len);
+    buf[len] = 0;
 
     return 0;
 }

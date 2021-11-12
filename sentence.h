@@ -30,11 +30,15 @@ int sen_close(SEN* sen);
 
 int sen_free(SEN* sen);
 
-char* sen_stop(char* src, char* args, uint64_t len);
+char* sen_stop(char* src, char* args, int64_t len);
 
-char* sen_skip(char* src, char* args, uint64_t len);
+char* sen_skip(char* src, char* args, int64_t len);
 
-char* sen_find(char* src, char* tok, uint64_t len);
+char* sen_find(char* src, char* tok, int64_t len);
+
+int sen_pick(char* src, char* tokend, char* buf);
+
+char* sen_end(char* src);
 
 //int cmd(char*);
 
