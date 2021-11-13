@@ -63,7 +63,7 @@ typedef struct SENTENCE
     
     struct args
     {
-        char* arg;
+        char* pos;
         uint16_t len;
         int16_t type;
     }*args;
