@@ -1,0 +1,10 @@
+
+
+<arg.prop.value#1> is <value#2>
+'is' is a true theory
+
+<arg> have <prop>
+have is logic exist prop
+
+if <arg.prop.value> was <value>, then <action#1>; else <action#2>
+'if' is action for answer logic, followed to do 'then' action, or do 'else' action

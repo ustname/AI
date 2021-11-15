@@ -9,11 +9,11 @@ int main()
     //var_init(10);
     
     char* w = "  World";
-    char* buf;
+    char buf[100];
     //memset(buf, 0, 100);
     //sen_pick(w, 0, buf);
-    buf = sen_end(w) - 1;
-    printf("%c ", *buf);
+    sen_pick(w, "d", buf, 1);
+    printf("%s ", buf);
     printf("done");
     return 0;
 }

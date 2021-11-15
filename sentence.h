@@ -37,7 +37,9 @@ char* sen_skip(char* src, char* args, int64_t len);
 
 char* sen_find(char* src, char* tok, int64_t len);
 
-int sen_pick(char* src, char* tokend, char* buf);
+int sen_pick(char* src, char* tokend, char* buf, int64_t len);
+
+int sen_comp(char* dst, char* src);
 
 char* sen_end(char* src);
 

@@ -1,0 +1,10 @@
+
+
+set <arg> to <arg>
+set is for assigning value from 'set' argument to 'to' argument
+
+call <arg> with <arg> to <arg>
+call is for running function from 'call' argument with argument from 'with' argument then returned result to 'to' argument
+
+jump <arg:int>
+jump is for 
