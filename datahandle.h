@@ -14,7 +14,7 @@ enum DATATYPE{
     SI8 = 10, SI16 = 12, SI32 = 14, SI64 = 16,
     CHAR = UI8, SHORT = SI16, INT = SI32, SF = 18, DF = 20, 
     CP = 3, IP = 15, FP = 19, DP = 21, VP = 1,
-    
+    TYPE_VAR = 23, TYPE_PROP = 25, TYPE_SEN = 27,
 };
 
 typedef struct VAR VAR;

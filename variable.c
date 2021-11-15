@@ -82,12 +82,12 @@ VAR* var_find(char* name, VAR* var_stack)
         //location = 1;
         //result = location = //varv->prop[location].data.var;
     }
-    if ( !strncmp( var_findprop(varv, "type")->data.cp, "var_stack", 9 ) )
-    {
+    if ( strncmp( var_findprop(varv, "type")->data.cp, "var_stack", 9 ) )
+    {//printf("var find %s %i", varv->name, varv->flags); exit(7);
         return 0;
     }
     limit = var_findprop(varv, "var_num")->data.byte64;
-    VAR* varp = var_findprop(varv, "data")->data.var;
+    VAR* varp = var_findprop(varv, "value")->data.var;
     
     for (uint64_t i = 0; i < limit; i++)
     {//printf("%i, ", varp[i].flags);
@@ -104,10 +104,10 @@ VAR* var_find(char* name, VAR* var_stack)
 }
 
 
-int64_t var_findempty(struct VAR* var, int limit)
+int64_t var_findempty(VAR* var, int limit)
 {//printf("limit = %i", limit);
     for (int i = 0; i < limit; i++)
-    {
+    {//printf("%i ", var->flags);
         if (var->flags == 0)
         {
             return i;
@@ -117,37 +117,6 @@ int64_t var_findempty(struct VAR* var, int limit)
     return -1;
 }
 
-/*
-VAR* var_create2(char* name)
-{
-    
-    if(var_find(name, 0))
-    {
-        return 0;
-    }
-
-    struct VAR_VAULT* varv = VAR_vault;
-    int index;
-    int result = var_findempty(&varv, &index);//printf("%i", index);
-    if(result == -1)
-    {
-        return 0;
-    }
-
-    VAR* var = &varv->varp[index];
-    char* var_name = malloc(strlen(name) + 1);
-    var->var_name = var_name;
-    strcpy(var->var_name, name);
-    var->flags = VARENUM_USED;
-    var->version = 0;
-    var->prop = 0;
-    var->prop_num = 0;
-
-    var_current = var;
-    return var;
-}
-*/
-
 VAR* var_create(char* name, VAR* var_stack)
 {
     if(var_find(name, var_stack))
@@ -155,7 +124,7 @@ VAR* var_create(char* name, VAR* var_stack)
         return 0;
     }
 
-    int location;
+    PROP* location;
     uint64_t index;
     uint64_t limit;
     //VAR* varv = var_stack;
@@ -163,8 +132,8 @@ VAR* var_create(char* name, VAR* var_stack)
     if(var_stack == 0)
     {
         var_stack = VAR_vault;
-        location = vaultdata;
-        limit = var_stack->prop[vaultnum].data.byte64;
+        location = var_findprop(var_stack, "value");
+        limit = var_findprop(var_stack, "var_num")->data.byte64;
         index = var_findempty(var_stack->prop[vaultdata].data.var, limit);
     }else
     {
@@ -172,21 +141,23 @@ VAR* var_create(char* name, VAR* var_stack)
         //index = var_findprop(varv, "var_num");index = 0;
         //limit = varv->prop[index].data.byte64;
         //index = var_findempty(varv->prop[location].data.var, limit);
-        limit = var_stack->prop[0].data.byte64;
-        location = 1;
-        index = var_findempty(var_stack->prop[location].data.var, limit);
+        limit = var_findprop(var_stack, "var_num")->data.byte64;
+        location = var_findprop(var_stack, "value");
+        index = var_findempty(location->data.var, limit);//printf(" from stack");
     }
+    //printf("limit is %i", limit);
 
     if (index == -1)
     {
         //errnum = ERR_STACKISFULL;
+        printf(" error"); exit(9);
         return 0;
     }
     
     
     //printf("index = %i ", index);
 
-    VAR* var = &var_stack->prop[location].data.var[index];//printf("no error%p", &varv->prop[location].data.var[index]-0);
+    VAR* var = &location->data.var[index];//printf("no error%p", &varv->prop[location].data.var[index]-0);
     var->name = strdup(name);
     var->flags = VARENUM_USED;
     var->version = 0;
@@ -438,6 +409,7 @@ void var_dump(VAR* var)
     
 }
 
+int var_cleanfromtype(PROP* prop);
 
 int var_delete(VAR* var)
 {
@@ -448,14 +420,14 @@ int var_delete(VAR* var)
     {
         var = var_current;
     }
-    
+    //printf("%s %i", var->name, var->prop_num);
     prop_count = var->prop_num;
     for (int i = 0; i < prop_count; i++)
     {
-        if(var->prop[i].length == 0) 
+        if(var->prop[i].length == 0)
             continue;
-
-        free(var->prop[i].data.vd);
+//printf(" before exit %s %i", var->prop[i].name, var->prop[i].length/4);
+        var_cleanfromtype(&var->prop[i]);
         var->prop[i].length = 0;
     }
     free(var->prop); var->prop = 0;
@@ -467,6 +439,28 @@ int var_delete(VAR* var)
 
     return 0;
 }
+
+int var_cleanfromtype(PROP* prop)
+{
+    switch (prop->type)
+    {
+        case TYPE_VAR://printf(" call away");
+        var_delete(prop->data.var); 
+        break;
+
+        case TYPE_SEN:
+        SEN* sen = prop->data.sen;
+        free(sen->src);
+        free(sen->args);
+        free(sen);
+        break;
+    
+        default:
+        free(prop->data.vd);
+        break;
+    }
+}
+
 /*
 int var_delete2(VAR_VAULT* var_stack, char* name)
 {
@@ -568,7 +562,7 @@ void var_init(uint64_t size)
     VAR_vault->prop[vaultnum].data.byte64 = size;
     VAR_vault->prop[2].name = strdup("type");
     VAR_vault->prop[2].data.cp = strdup("var_stack");
-    VAR_vault->prop[vaultdata].name = strdup("data");
+    VAR_vault->prop[vaultdata].name = strdup("value");
     VAR_vault->prop[vaultdata].data.var = malloc(sizeof(VAR) * size);//printf("%p", VAR_vault->prop[vaultdata].data.var);
     varv = VAR_vault->prop[vaultdata].data.var;
     var_setvarnum0(varv, size);

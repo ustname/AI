@@ -19,30 +19,35 @@ VAR* var_createstack(char* stackname, uint64_t stacknum)
     prop->data.byte64 = stacknum;
     prop->type = UI64;
     prop->length = 0;
-    var_write(stack, prop);
-
+    int res = var_writeprop(stack, prop);
+    
+    
     //*prop = (PROP){"var_num", 67, .data.byte64 = 0, 0, 0};
 
     //prop_edit(prop, PROP_EDIT_CLEAN, NULL);
     //prop = &stack->prop[1];
-    prop->name = strdup("data");
+    prop->name = strdup("value");
     prop->data.var = malloc(sizeof(VAR) * stacknum);
-    prop->type = VP;
+    prop->type = TYPE_VAR;
     prop->length = sizeof(VAR) * stacknum;
     var_setvar0(prop->data.var, stacknum);
-    var_write(stack, prop);
-    
+    res = var_writeprop(stack, prop);
+    if (res)
+    {
+        printf("write prop error");
+        exit(9);
+    }
     //prop_edit(prop, PROP_EDIT_CLEAN, NULL);
     //prop = &stack->prop[2];
     prop->name = strdup("type");
     prop->data.cp = strdup("var_stack");
     prop->type = CP;
     prop->length = strlen(prop->data.cp);//printf("stack error");
-    var_write(stack, prop); 
+    var_writeprop(stack, prop); 
 //printf("       no error");
     return stack;
 }
-
+/*
 VAR* var_createstack2(char* stackname, uint64_t stacknum)
 {
     if (stackname == 0 || stacknum == 0)
@@ -89,7 +94,7 @@ int var_cleanstack()
 {
     
 }
-
+*/
 
 void var_setvar0(VAR* varv, uint64_t count)
 {
