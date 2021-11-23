@@ -10,7 +10,6 @@
 
 
 enum VARENUM{
-    VARENUM_EMPTY = -1,
     VARENUM_NULL = 0,
     VARENUM_USED = 1
 };
@@ -27,6 +26,8 @@ typedef struct VAR_VAULT
     struct VAR_VAULT *next;
 }VAR_VAULT;
 
+VAR* var_alloc(int64_t num);
+
 /**
  * create a variable from name
  * return variable pointer, else return 0 if already exist
@@ -37,21 +38,23 @@ VAR* var_create(char* name, VAR* var_stack);
 
 VAR* var_find(char* name, VAR*);
 
-
+/// return the prop index, if not found return 0
 PROP* var_findprop(VAR* var, char* prop_name);
 
 
 int var_delete(VAR* name);
 
 
-
 int var_writeprop(VAR* var, PROP* prop);
 
 
-int var_write(VAR* var, char* prop_name, uint64_t length, V_DATA* data, int type);
+int var_write(VAR* var, char* prop_name, uint64_t length, DATA* data, int type);
 
 
-int var_read(VAR* var, char* prop_name, void* data, int* length);
+PROP* var_readprop(VAR* var, char* prop_name);
+
+
+DATA var_read(VAR* var, char* prop_name);
 
 
 int var_save(VAR* var, char* filename);
@@ -59,7 +62,9 @@ int var_save(VAR* var, char* filename);
 
 VAR* var_open(char* filename, VAR*);
 
-VAR* var_createstack(char* stackname, uint64_t stacknum);
+VAR* var_createstack(char* stackname, int64_t stacknum);
+
+VAR* var_createchild(VAR* parent, int64_t stacknum);
 
 void var_init(uint64_t size);
 
@@ -72,15 +77,14 @@ enum PROP_EDIT{
     PROP_EDIT_READ,
 };
 
-enum PROP_CODE{
-    PROP_CODE_CLEANAFTERWRITE = -2,
-    PROP_CODE_EMPTY = 0,
-    PROP_CODE_USED = 1,
+enum PROP_FLAG{
+    PROP_FLAG_EMPTY = 0,
+    PROP_FLAG_USED = 1,
 };
 
 PROP* prop_create(char*);
 
-int prop_edit(PROP*, int, V_DATA*);
+int prop_edit(PROP*, int, DATA*);
 
 int prop_setname(PROP* prop, char* name);
 

@@ -1,7 +1,7 @@
 
 #include "variable.h"
 #include "sentence.h"
-#define DATAP(X) &(V_DATA){.byte64 = X}
+#define DATAQP(X) &(DATA){.byte64 = X}
 #include <limits.h>
 #include <assert.h>
 
@@ -9,17 +9,17 @@ int main()
 {
     var_init(10);
     
-    VAR* stack = var_createstack("stack", 4);
-    //assert(stack);
-    if (!stack)
+    VAR* var = var_create("var", 0);
+    var_createchild(var, 10);
+    VAR* child = var_read(var, "-child").var;
+    if (!child)
     {
-        printf("erro exit var create");
-        exit(8);
+        printf("child not found");
     }
     
+    //VAR* stack = var_createstack("stack", 4);
+    //assert(stack);
     
-    var_create("lmao", var_find("stack", 0));
-    var_delete(stack);
     //printf("%p", stack->prop[0].data);
     printf("done");
     return 0;

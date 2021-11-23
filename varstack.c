@@ -3,7 +3,7 @@
 
 void var_setvar0(VAR* varv, uint64_t count);
 
-VAR* var_createstack(char* stackname, uint64_t stacknum)
+VAR* var_createstack(char* stackname, int64_t stacknum)
 {
     if (stackname == 0 || stacknum == 0)
     {
@@ -11,7 +11,7 @@ VAR* var_createstack(char* stackname, uint64_t stacknum)
     }
     
     VAR* stack = var_create(stackname, 0);
-    V_DATA data;
+    DATA data;
 
     //PROP* prop = prop_create()
     PROP* prop = prop_create(0);
@@ -40,13 +40,31 @@ VAR* var_createstack(char* stackname, uint64_t stacknum)
     //prop_edit(prop, PROP_EDIT_CLEAN, NULL);
     //prop = &stack->prop[2];
     prop->name = strdup("type");
-    prop->data.cp = strdup("var_stack");
+    prop->data.cp = strdup("child");
     prop->type = CP;
     prop->length = strlen(prop->data.cp);//printf("stack error");
     var_writeprop(stack, prop); 
 //printf("       no error");
     return stack;
 }
+
+VAR* var_createchild(VAR* parent, int64_t stacknum)
+{
+    if (!stacknum || !parent)
+    {
+        return 0;
+    }
+    
+    DATA var;
+    var.var = var_alloc(stacknum);
+    memset(var.vp, 0, sizeof(VAR) * stacknum);
+
+    var_write(parent, "-child", sizeof(VAR) * stacknum, &var, TYPE_VAR);
+    
+    
+    return var.var;
+}
+
 /*
 VAR* var_createstack2(char* stackname, uint64_t stacknum)
 {

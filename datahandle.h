@@ -8,6 +8,8 @@
 #ifndef DATAHANDLE__H
 #define DATAHANDLE__H
 
+#define DATAQ(X) (DATA){.byte64 = X}
+
 enum DATATYPE{
     VOID0 = 0, PTR = 1,
     UI8 = 2, UI16 = 4, UI32 = 6, UI64 = 8,
@@ -19,18 +21,18 @@ enum DATATYPE{
 
 typedef struct VAR VAR;
 typedef struct PROP PROP;
-typedef union DATA V_DATA;
+typedef union DATA DATA;
 typedef struct FUN FUN;
 typedef struct SENTENCE SEN;
 
 union DATA
 {
-    size_t byte64;
+    int64_t byte64;
     uint32_t byte32[2];
     uint16_t byte16[4];
-    uint8_t byte8[8];
+    uint8_t  byte8 [8];
 
-    void* vd;
+    void* vp;
     char* cp;
     float f[2];
     double d;
@@ -65,7 +67,7 @@ typedef struct SENTENCE
     {
         char* pos;
         uint16_t len;
-        int16_t type;
+        uint16_t type;
     }*args;
     
 }SEN;
@@ -73,16 +75,16 @@ typedef struct SENTENCE
 struct PROP
 {
     char* name;
+    DATA data;
     uint64_t length;
-    V_DATA data;
-    int type;
-    int code;
+    uint8_t type;
+    uint8_t flags;
 };
 
 typedef struct VAR
 {
     char* name;
-    int flags;
+    uint32_t flags;
     uint32_t version;
 
     PROP *prop;

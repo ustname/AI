@@ -10,7 +10,7 @@ PROP* prop_create(char* name)
     prop->length = 0;
     prop->data.byte64 = 0;
     prop->type = 0;
-    prop->code = PROP_CODE_USED;
+    prop->flags = PROP_FLAG_USED;
 
 
     return prop;
@@ -18,13 +18,13 @@ PROP* prop_create(char* name)
 
 
 
-int prop_edit(PROP* prop, int code, V_DATA* data)
+int prop_edit(PROP* prop, int code, DATA* data)
 {
     if (prop == NULL)
     {
         return -1;
     }
-    V_DATA value;
+    DATA value;
     if (data != 0)
     {
         value = *data;
@@ -47,7 +47,7 @@ int prop_edit(PROP* prop, int code, V_DATA* data)
         case PROP_EDIT_CLEAN:
         prop->name = 0;
         prop->type = 0;
-        prop->code = PROP_CODE_EMPTY;
+        prop->flags = PROP_FLAG_EMPTY;
         prop->data.byte64 = 0;
         prop->length = 0;
         break;
@@ -59,10 +59,10 @@ int prop_edit(PROP* prop, int code, V_DATA* data)
         }//printf("properror");
         prop->name = 0;
         prop->type = 0;
-        prop->code = 0;
+        prop->flags = 0;
         if (prop->length != 0)
         {
-            free(prop->data.vd);
+            free(prop->data.vp);
             prop->length = 0;
         }
         prop->data.byte64 = 0;
@@ -75,7 +75,7 @@ int prop_edit(PROP* prop, int code, V_DATA* data)
     return 0;
 }
 
-int prop_write(PROP* prop, V_DATA data, uint64_t length)
+int prop_write(PROP* prop, DATA data, uint64_t length)
 {
     if (prop == 0)
     {
@@ -89,9 +89,9 @@ int prop_write(PROP* prop, V_DATA data, uint64_t length)
     {
         if(prop->length != 0)
         {
-            free(prop->data.vd);
-            prop->data.vd = malloc(length);
-            memcpy(prop->data.vd, data.vd, length);
+            free(prop->data.vp);
+            prop->data.vp = malloc(length);
+            memcpy(prop->data.vp, data.vp, length);
             prop->length = length;
         }
     }

@@ -1,6 +1,6 @@
 
 
-
+======================================
 reason:
 joy/pain, true/false, good/bad
 
@@ -14,3 +14,11 @@ isLearn(true) = joy
 isMatter(true) = good
 feel(joy) = good
 feel(!pain) = must
+
+======================================
+label:
+have, want, will, can
+
+want = have interest \\ good for do action
+will = have to act later \\ do action then
+can  = able to do action

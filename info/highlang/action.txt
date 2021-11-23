@@ -1,10 +1,17 @@
 
 
+registers as:
+#0, #1, #2, #3, #4, #5, #6, #7 
+
+
+get <arg> from <arg>
+get is for finding 'get' argument from system or from 'from' argument
+
 set <arg> to <arg>
 set is for assigning value from 'set' argument to 'to' argument
 
 call <arg> with <arg> to <arg>
 call is for running function from 'call' argument with argument from 'with' argument then returned result to 'to' argument
 
-jump <arg:int>
-jump is for 
+jump <arg:uint>
+jump is for set action list at offset argument
