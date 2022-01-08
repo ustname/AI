@@ -1,30 +1,6 @@
 
 
- -  00: End Instruction
+ - 0000 : Return
 
- -  01: Base
-
-        0001: Reg A to Reg B
-        0002: Reg A to Reg C
-        0003: Reg A to Reg D
-        0004: Reg B to Reg A
-        0005: Reg B to Reg C
-        0006: Reg B to Reg D
-        0007: Reg C to Reg A
-        0008: Reg C to Reg B
-        0009: Reg C to Reg D
-        000A: More Register               8 byte
-        000B: Memory allocation           8 byte memory destination pointer, 8 byte memory size
-        000C: Free                        8 byte memory destination
-        000D: Function Call               8 byte function pointer
-
-
- -  02: System Call
-
-        01: 
-
-
- -  03: Variable
-
-        01: Variable Init         
-        02: Variable Write                
+ - 0001 : Base
+        - 

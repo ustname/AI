@@ -48,10 +48,9 @@ int var_delete(VAR* name);
 int var_writeprop(VAR* var, PROP* prop);
 
 
-int var_write(VAR* var, char* prop_name, uint64_t length, DATA* data, int type);
+int var_write(VAR* var, char* prop_name, uint64_t length, DATA data, uint8_t type);
 
 
-PROP* var_readprop(VAR* var, char* prop_name);
 
 
 DATA var_read(VAR* var, char* prop_name);
@@ -62,11 +61,19 @@ int var_save(VAR* var, char* filename);
 
 VAR* var_open(char* filename, VAR*);
 
-VAR* var_createstack(char* stackname, int64_t stacknum);
+VAR* var_stackcreate(char* stackname, int64_t stacknum);
 
-VAR* var_createchild(VAR* parent, int64_t stacknum);
+int var_stackupgrade(VAR* var_stack, int64_t stacknum);
+
+/*
+VAR* var_child(VAR* parent, int64_t stacknum);
+
+VAR* var_childcreate(VAR* parent, char* name);
+*/
 
 void var_init(uint64_t size);
+
+void var_quit();
 
 enum PROP_EDIT{
     PROP_EDIT_FREE = 0,

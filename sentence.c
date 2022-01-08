@@ -154,7 +154,7 @@ char* sen_find(char* src, char* tok, int64_t len)
     
     for (int64_t i = 0; i < len; i++)
     {
-        if (strncmp(&src[i], tok, toklen) == 0) return &src[i];
+        if ( strncmp(&src[i], tok, toklen) == 0 ) return &src[i];
     }
 
     return 0;

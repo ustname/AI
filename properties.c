@@ -130,11 +130,11 @@ void prop_dump(PROP* prop)
 
     switch (prop->type)
     {
-        case CP:
+        case CHARP:
         type = "char ptr";
         break;
 
-        case VP:
+        case VOIDP:
         type = "void ptr";
         break;
 
@@ -170,11 +170,11 @@ void prop_dump(PROP* prop)
         type = "uint8";
         break;
 
-        case SF:
+        case SINGLEF:
         type = "float";
         break;
 
-        case DF:
+        case DOUBLEF:
         type = "double";
         break;
 

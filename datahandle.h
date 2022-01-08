@@ -9,33 +9,35 @@
 #define DATAHANDLE__H
 
 #define DATAQ(X) (DATA){.byte64 = X}
+#define DATAPQ(X) (DATA){.vp = X}
 
 enum DATATYPE{
     VOID0 = 0, PTR = 1,
     UI8 = 2, UI16 = 4, UI32 = 6, UI64 = 8,
     SI8 = 10, SI16 = 12, SI32 = 14, SI64 = 16,
-    CHAR = UI8, SHORT = SI16, INT = SI32, SF = 18, DF = 20, 
-    CP = 3, IP = 15, FP = 19, DP = 21, VP = 1,
+    CHAR = UI8, SHORT = SI16, INT = SI32, SINGLEF = 18, DOUBLEF = 20, 
+    CHARP = 3, INTP = 15, FLOATP = 19, DOUBLEP = 21, VOIDP = 1,
     TYPE_VAR = 23, TYPE_PROP = 25, TYPE_SEN = 27,
 };
 
 typedef struct VAR VAR;
 typedef struct PROP PROP;
-typedef union DATA DATA;
+typedef union  DATA DATA;
 typedef struct FUN FUN;
 typedef struct SENTENCE SEN;
 
 union DATA
 {
-    int64_t byte64;
+    uint64_t byte64;
     uint32_t byte32[2];
     uint16_t byte16[4];
     uint8_t  byte8 [8];
+    float    f[2];
 
-    void* vp;
-    char* cp;
-    float f[2];
+    int64_t i;
     double d;
+    char* cp;
+    void* vp;
 
     VAR* var;
     PROP* prop;
@@ -43,11 +45,11 @@ union DATA
     SEN* sen;
 };
 
-typedef int(FUNCTION)(void*, void*, void*, void*);
+typedef DATA(FUNCTION)(void*, void*, void*, void*);
 
 typedef struct FUN
 {
-    char* fun_name;
+    char* name;
     FUNCTION* fun;
     uint32_t argc;
     int type;
@@ -72,14 +74,14 @@ typedef struct SENTENCE
     
 }SEN;
 
-struct PROP
+typedef struct PROP
 {
     char* name;
-    DATA data;
     uint64_t length;
+    DATA data;
     uint8_t type;
     uint8_t flags;
-};
+}PROP;
 
 typedef struct VAR
 {
@@ -97,7 +99,6 @@ typedef struct VAR
 //    printf("exit with code %i", code);
 //    exit(code);
 //}
-
 //extern int64_t errnum = 0;
 
 enum ERROR_CODE{

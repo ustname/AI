@@ -1,8 +1,9 @@
-version 1
 
 metadata:
 4 byte = 'var '
 4 byte = version
+
+version 1
 
 4 byte = variable name length
 n byte = variable name
@@ -11,4 +12,21 @@ n byte = variable name
 4 byte = properties name length
 n byte = properties name
 4 byte = properties data length
+n byte = properties data
+
+==========================================
+
+version 2
+
+2 byte = variable name length
+n byte = variable name
+4 byte = variable flags
+4 byte = variable version
+8 byte = variable properties number
+
+2 byte = properties name length
+n byte = properties name
+1 byte = properties flags
+1 byte = properties data type
+8 byte = properties data length
 n byte = properties data
