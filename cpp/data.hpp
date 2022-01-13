@@ -3,6 +3,8 @@
 #include <string>
 #include <cstring>
 
+#pragma once
+
 #define DATAQ(X) (DATA){.byte64 = X}
 #define DATAQQ(X) (DATA){X}
 #define DATAPQ(X) (DATA){.vp = X}
@@ -15,7 +17,7 @@ enum DATATYPE{
     CHARP = 3, INTP = 15, FLOATP = 19, DOUBLEP = 21, VOIDP = 1,
     TYPE_VAR = 23, TYPE_PROP = 25, TYPE_SEN = 27,
 };
-
+/*
 enum PROP_EDIT{
     PROP_EDIT_FREE = 0,
     PROP_EDIT_CLEAN = 1,
@@ -24,17 +26,7 @@ enum PROP_EDIT{
     PROP_EDIT_WRITE,
     PROP_EDIT_READ,
 };
-
-enum PROP_FLAG{
-    PROP_FLAG_EMPTY = 0,
-    PROP_FLAG_USED = 1,
-};
-
-enum VAR_FLAG{
-    VAR_FLAG_EMPTY = 0,
-    VAR_FLAG_USED = 1,
-    VAR_FLAG_STACK = 2,
-};
+*/
 
 union DATA
 {
@@ -44,7 +36,7 @@ union DATA
     uint8_t  byte8 [8];
     float    f[2];
 
-    int64_t i;
+    //int64_t i;
     double d;
     char* cp;
     void* vp;

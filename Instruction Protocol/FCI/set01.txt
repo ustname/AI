@@ -1,0 +1,16 @@
+
+
+00 Return
+01 set var : position 8 byte
+02 set prop : position 8 byte
+03 var();
+    01 var(charp) : variable name 8 byte
+    02 var(charp, int64) : variable name 8 byte, variable number 8 byte
+04 var.write();
+    01 var.write(int32, charp) : properties index 4 byte, char pointer data 8 byte
+    02 var.write(int32, int64) : properties index 4 byte, signed int64 data 8 byte
+    03 var.write(int32, uint8, uint64) : properties index 4 byte, data type 1 byte, number 8 byte
+    04 var.write(int32, voidp, uint64) : properties index 4 byte, data pointer 8 byte, data length 8 byte
+05 var.find(charp) : variable child name 8 byte : return requested variable 8 byte
+06 var.findprop(charp) : properties name 8 byte : return requested properties 8 byte
+07 var.create(charp) : variable child name 8 byte : return created variable 8 byte
