@@ -1,0 +1,53 @@
+
+
+Declaration ( data type + variable name)
+
+    var name
+    int number
+
+Definition (variable + "=" + data/variable)
+
+    text = "Hello World"
+
+Arithmetic (variable + Number Operator + int/float)
+
+    num + 7
+
+Boolean (variable + Boolean Operator + bool/int/string)
+
+    is_open == true
+
+Statement (if + bool + ":")
+
+    if num < 10:
+        action
+    elif num < 20:
+        action
+    else:
+        action
+
+For Loop (for + Declaration, + Boolean, + Optional Action, + ":")
+
+    for i, i <= 4, i += 1:
+        action
+
+While Loop (while + Boolean + ":")
+
+    while is_running == true:
+        action
+
+Function (data type + function name + "(" + argument + "):")
+
+    int add(int a, int b):
+        int c = a + b
+        return c
+
+    function mul(int a, int b):
+        int c = a + b
+        return c
+
+Array (Declaration + "[" + int + "]")
+
+    int num[10] = {1, 2, 3}
+    num[0] = 5
+        

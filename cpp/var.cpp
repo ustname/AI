@@ -2,7 +2,7 @@
 
 al::var* var_current;
 
-int _write(al::var* var, char* prop_name, uint64_t length, DATA data, uint8_t type, uint32_t write_flags)
+int _write(al::var* var, char* prop_name, uint64_t length, variant data, uint8_t type, uint32_t write_flags)
 {
     if(prop_name == NULL)
     {
@@ -40,13 +40,13 @@ int _write(al::var* var, char* prop_name, uint64_t length, DATA data, uint8_t ty
     
     switch (write_flags)
     {
-    case MEMALLOC:
+    case MEMALLOC: // Just reallocate a new memory
         prop_dst->data.vp = malloc(length);
-        memset(prop_dst->data.vp, 0, length); std::cout << prop_dst->data.vp;
+        memset(prop_dst->data.vp, 0, length);
         prop_dst->length = length;
         break;
     
-    case MEMCOPY:
+    case MEMCOPY: // Realocate and copy the value
         if (length != 0)
         {
             prop_dst->data.vp = malloc(length);
@@ -55,6 +55,7 @@ int _write(al::var* var, char* prop_name, uint64_t length, DATA data, uint8_t ty
         }else
         {
             prop_dst->data = data;
+            prop_dst->length = length;
         }
         break;
 
@@ -62,11 +63,18 @@ int _write(al::var* var, char* prop_name, uint64_t length, DATA data, uint8_t ty
 
     default:
         prop_dst->data = data;
+        prop_dst->length = length;
+        break;
     }
     prop_dst->type = type;
     var->version++;
     
     return 0;
+}
+
+int al::var::write(char* prop_name, uint64_t length, variant data, uint8_t type, uint32_t write_flags)
+{
+    return _write(this, prop_name, length, data, type, write_flags);
 }
 
 int al::var::write(char* prop_name, char* data)
@@ -75,27 +83,12 @@ int al::var::write(char* prop_name, char* data)
     {
         return -1;//(prop->name == 0) || (prop->data.byte64 == 0) || (prop->length == 0)
     }
-    DATA v; 
+    variant v; 
     v.cp = data; //std::cout << this->name << " jnuhbygv ";
     int ret = _write(this, prop_name, strlen(data)+1, v, CHARP, MEMCOPY);
     
     return ret;
 }
-
-/*
-int al::var::write(char* prop_name, int64_t data)
-{
-    if(prop_name == NULL)
-    {
-        return -1;//(prop->name == 0) || (prop->data.byte64 == 0) || (prop->length == 0)
-    }
-    DATA v;
-    v.i = data;
-    int ret = _write(this, prop_name, 0, v, SI64, MEMPOINTER);
-    
-    return ret;
-}
-*/
 
 int al::var::write(char* prop_name, double data)
 {
@@ -103,7 +96,7 @@ int al::var::write(char* prop_name, double data)
     {
         return -1;//(prop->name == 0) || (prop->data.byte64 == 0) || (prop->length == 0)
     }
-    DATA v;
+    variant v;
     v.d = data;
     int ret = _write(this, prop_name, 0, v, DOUBLEF, MEMPOINTER);
     
@@ -127,8 +120,8 @@ int al::var::write(char* prop_name, uint8_t type, uint64_t num)
         length = num;
         break;
     }
-
-    DATA v;
+    type |= VOIDP;
+    variant v;
     v.d = 0;
     int ret = _write(this, prop_name, length, v, type, MEMALLOC);
     
@@ -141,7 +134,7 @@ int al::var::write(char* prop_name, void* data, uint64_t len)
     {
         return -1;//(prop->name == 0) || (prop->data.byte64 == 0) || (prop->length == 0)
     }
-    DATA v;
+    variant v;
     v.vp = data;
     int ret = 0;
     
@@ -157,21 +150,31 @@ int al::var::write(char* prop_name, void* data, uint64_t len)
     return ret;
 }
 
-int al::var::rewrite(char* prop_name, char* prop_newname)
+int al::prop::set_name(char* name)
 {
-    al::prop* prop = this->findprop(prop_name);
-    if (!prop)
+    if ( name != nullptr )
     {
-        return 1;
-    }
-
-    delete prop->name;
-    prop->name = strdup(prop_newname);
+        delete this->name;
+    };
+    
+    this->name = strdup(name);
 
     return 0;
 }
 
-DATA* al::var::read(char* prop_name)
+int al::var::set_name(char* name)
+{
+    if ( name != nullptr )
+    {
+        delete this->name;
+    };
+    
+    this->name = strdup(name);
+
+    return 0;
+}
+
+variant* al::var::read(char* prop_name)
 {
     al::prop* prop = this->findprop(prop_name);
     if (!prop)
@@ -232,7 +235,7 @@ al::var* al::var::find(char* name)
         exit(1);
     }
 
-    if ( strncmp( prop_type->data.cp, "stack var", 10 ) )
+    if ( strncmp( prop_type->data.cp, "var array", 10 ) )
     {   printf("not stack var, but %i", *prop_type->data.cp); exit(7);
         return 0;
     }
@@ -287,7 +290,7 @@ al::var* al::var::create(char* name)
         std::cerr << this->name << " is incomplete var" << std::endl;
         exit(1);
     }
-    if(strncmp(type->data.cp, "stack var", 10) != 0)
+    if(strncmp(type->data.cp, "var array", 10) != 0)
     {
         std::cerr << this->name << " is not stack var, but " << type->data.cp << std::endl;
         exit(1);
@@ -368,7 +371,7 @@ int var_delete(al::var* var)
         var_cleanfromtype(&var->prop[i]);
         var->prop[i].length = 0;
     }//printf("already out\n");
-    var->prop.~vector();
+    //var->prop.~vector();
     free(var->name); var->name = 0;
     
     //var->prop_num = 0;
@@ -380,14 +383,266 @@ int var_delete(al::var* var)
 
 int al::var::destroy()
 {
-    std::string str(this->name);
+    if (this->flags == VAR_FLAG_EMPTY)
+    {
+        return 1;
+    }
+
+    char* str = strdup(this->name); //printf("\n%p %p\n", this->name, str);
     int code = var_delete(this);
     std::cout << "Destroyed variable \"" << str << "\"" << std::endl;
+    free(str);
     return code;
+}
+
+/*
+class filestream
+{
+private:
+    FILE* f;
+public:
+    filestream(char* filename)
+    {
+        f = fopen(filename, "wb+");
+        if (!f)
+        {
+            std::cout << "Can't open " << filename <<std::endl;
+            exit(1);
+        }
+    }
+    ~filestream()
+    {
+        fclose(f);
+    }
+
+    int write(char* data, uint64_t len)
+    {
+        fwrite(data, 1, len, f);
+    }
+
+    int read(char* data, uint64_t len)
+    {
+        fread(data, 1, len, f);
+    }
+
+};
+
+int al::var::save(char* filename)
+{
+    std::ofstream file;
+    file.open(filename, std::ios::binary | std::ios::out);
+    if (!file.is_open())
+    {
+        std::cerr << "Can't save \"" << this->name << "\" into \"" << filename << "\"" << std::endl;
+        return -1;
+    }
+
+    char* buffer = 0;
+    uint32_t version = 3;
+    uint32_t var_name_len = strlen(this->name) + 1;
+    uint32_t var_flag = this->flags;
+    uint32_t var_version = this->version;
+    uint32_t prop_num = this->prop.size();
+
+    file << "var ";
+    file.write((char*)&version, 4);
+    file.write((char*)&var_name_len, 4);
+    file.write(this->name, var_name_len);
+    file.write((char*)&var_flag, 4);
+    file.write((char*)&var_version, 4);
+    file.write((char*)&prop_num, 4);
+
+    al::prop* prop = this->prop.data();
+    for (int i = 0; i < prop_num; i++)
+    {
+        uint32_t prop_name_len = strlen(prop[i].name) + 1;
+        uint8_t prop_flag = prop[i].flags;
+        uint8_t prop_type = prop[i].type;
+        uint64_t prop_length = prop[i].length;
+        DATA data = prop[i].data;
+
+        file.write((char*)&prop_name_len, 4);
+        file.write(prop[i].name, prop_name_len);
+        file.write((char*)&prop_flag, 1);
+        file.write((char*)&prop_type, 1);
+        file.write((char*)&prop_length, 8);
+
+        if (prop_length == 0)
+        {
+            file.write((char*)&data, 8);
+        }else
+        {
+            file.write(data.cp, prop_length);
+        }
+    }
+    
+    
+    file.close();//std::cout << "save";
+    return 0;
+}
+*/
+
+int _save(al::var* var, std::ofstream& file)
+{
+    
+    //file.open(filename, std::ios::binary | std::ios::out);;
+    if (!file.is_open())
+    {
+        std::cerr << "Can't save \"" << var->name << "\"" << std::endl;
+        return -1;
+    }
+    //std::cout << "kmijnbygvcrd ";
+    char* buffer = 0;
+    uint32_t version = 4;
+    uint32_t var_flag = var->flags;
+    if (var_flag == VAR_FLAG_EMPTY)
+    {
+        file << "var ";
+        file.write((char*)&version, 4);
+        file.write((char*)&var_flag, 4);
+        return 0;
+    }
+    uint32_t var_name_len = strlen(var->name) + 1;
+    uint32_t var_version = var->version;
+    uint32_t prop_num = var->prop.size();
+
+    file << "var ";
+    file.write((char*)&version, 4);
+    file.write((char*)&var_flag, 4);
+    file.write((char*)&var_name_len, 4);
+    file.write(var->name, var_name_len);
+    file.write((char*)&var_version, 4);
+    file.write((char*)&prop_num, 4);
+
+    std::cout << var->name << " var is written" << std::endl;
+
+    if (prop_num == 0)
+        return 0;
+
+    al::prop* prop = var->prop.data();
+    for (int i = 0; i < prop_num; i++)
+    {
+        uint32_t prop_name_len = strlen(prop[i].name) + 1;
+        uint8_t prop_flag = prop[i].flags;
+        uint8_t prop_type = prop[i].type;
+        uint64_t prop_length = prop[i].length;
+        variant data = prop[i].data;
+
+        file.write((char*)&prop_flag, 1);
+        file.write((char*)&prop_name_len, 4);
+        file.write(prop[i].name, prop_name_len);
+        file.write((char*)&prop_type, 1);
+        file.write((char*)&prop_length, 8);
+
+        std::cout << prop[i].name << " prop is written" << std::endl;
+
+        if (prop_type == TYPE_VAR)
+        {
+            int count = prop_length/sizeof(al::var);
+            for (int j = 0; j < count; j++)
+            {
+                al::var* savedvar = (al::var*)(data.vp);
+                _save(&savedvar[j], file);
+            }
+        }else
+        {
+            if (prop_length == 0)
+            {
+                file.write((char*)&data, 8);
+            }else
+            {
+                file.write(data.cp, prop_length);
+            }
+        }
+    }
+    
+    
+    file.close();//std::cout << "save";
+    return 0;
 }
 
 int al::var::save(char* filename)
 {
+    std::ofstream file;
+    file.open(filename, std::ios::binary | std::ios::out);
+    if (!file.is_open())
+    {
+        std::cerr << "Can't save \"" << this->name << "\" into \"" << filename << "\"" << std::endl;
+        return -1;
+    }
 
+    _save(this, file);
+    
+    file.close();//std::cout << "save";
+    return 0;
+}
+
+al::var* al::var::load(char* filename)
+{
+    std::ifstream file;
+    file.open(filename, std::ios::binary | std::ios::in);
+    if (!file.is_open())
+    {
+        std::cerr << "Can't load \"" << filename << "\"" << std::endl;
+        return 0;
+    }
+    
+    char header[4];
+    uint32_t version = 3;
+    char var_name[1024];
+    uint32_t var_name_len;
+    uint32_t var_flag;
+    uint32_t var_version;
+    uint32_t prop_num;
+
+    file.read(header, 4);
+    if (strncmp(header, "var ", 4))
+    {
+        std::cerr << filename << " is not Variable data" << std::endl;
+    }
+    //std::cout << "kmijnuhb";
+    file.read((char*)&version, 4);
+    file.read((char*)&var_name_len, 4);
+    file.read(var_name, var_name_len);
+    file.read((char*)&var_flag, 4);
+    file.read((char*)&var_version, 4);
+    file.read((char*)&prop_num, 4);
+
+    this->name = strdup(var_name);
+    this->flags = var_flag;
+    this->version = var_version;
+    this->prop.resize(prop_num);
+    
+    al::prop* prop = this->prop.data();
+    for (int i = 0; i < prop_num; i++)
+    {
+        uint32_t prop_name_len;
+        char prop_name[1024];
+        uint8_t prop_flag;
+        uint8_t prop_type;
+        uint64_t prop_length;
+        variant data;
+
+        file.read((char*)&prop_name_len, 4);
+        file.read(prop_name, prop_name_len);
+        file.read((char*)&prop_flag, 1);
+        file.read((char*)&prop_type, 1);
+        file.read((char*)&prop_length, 8);//std::cout << prop_name_len;
+
+        prop[i].name = strdup(prop_name);
+        prop[i].flags = prop_flag;
+        prop[i].type = prop_type;
+        prop[i].length = prop_length;
+        
+        if (prop_length == 0)
+        {
+            file.read((char*)&prop->data, 8);
+        }else
+        {
+            file.read(prop[i].data.cp, prop_length);
+        }
+    }
+    
+    file.close();
     return 0;
 }

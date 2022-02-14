@@ -1,9 +1,0 @@
-
-
-00 Return
-01 Set Destination : Variable\Properties\Pointer
-02 Set Source : Variable\Properties\Pointer
-03 Open Variable : Variable pointer 8 byte, index 4 byte
-04 Variable edit : name char pointer 8 byte
-05 Open Properties : index 4 byte
-06 Properties edit : 

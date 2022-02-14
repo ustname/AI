@@ -2,8 +2,8 @@
 
 namespace al
 {
-    class proto
+    class time
     {
-        
+        std::chrono::time_point
     };
-};
+}

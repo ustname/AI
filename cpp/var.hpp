@@ -6,13 +6,11 @@
 enum PROP_FLAG{
     PROP_FLAG_EMPTY = 0b0,
     PROP_FLAG_USED = 0b1,
-    PROP_FLAG_ARRAY = 0b10,
 };
 
 enum VAR_FLAG{
     VAR_FLAG_EMPTY = 0b0,
     VAR_FLAG_USED = 0b1,
-    VAR_FLAG_STACK = 0b10,
 };
 
 namespace al
@@ -23,9 +21,10 @@ namespace al
     public:
         char* name;
         uint64_t length;
-        DATA data;
+        variant data;
         uint8_t type;
         uint8_t flags;
+        int set_name(char* name);
     };
 
     class var
@@ -38,7 +37,13 @@ namespace al
 
         var()
         {
+            this->name = nullptr;
             this->flags = VAR_FLAG_EMPTY;
+        }
+
+        ~var()
+        {
+            this->destroy();
         }
 
         var(char* name)
@@ -47,18 +52,19 @@ namespace al
             this->prop;
             this->flags = VAR_FLAG_USED;
             this->version = 0;
+            std::cout << "Created variable \"" << this->name << "\"" << std::endl;
         }
         
         var(char* name, int32_t stack_num)
         {
             this->name = strdup(name);
             this->prop;
-            this->flags = VAR_FLAG_USED | VAR_FLAG_STACK;
+            this->flags = VAR_FLAG_USED;
             this->version = 0;
 
             this->write("var_num", stack_num);
+            this->write("type", "var array");
             this->write("data", TYPE_VAR, stack_num);
-            this->write("type", "stack var");
         }
 
         // Variable Modifier
@@ -68,10 +74,11 @@ namespace al
         int write(char* prop_name, double data);
         int write(char* prop_name, uint8_t type, uint64_t num);
         int write(char* prop_name, void* data, uint64_t len);
+        int write(char* prop_name, uint64_t length, variant data, uint8_t type, uint32_t write_flags);
 
-        int rewrite(char* prop_name, char* prop_newname);
+        int set_name(char* name);
 
-        DATA* read(char* prop_name);
+        variant* read(char* prop_name);
 
         int destroy();
         
@@ -81,6 +88,7 @@ namespace al
         
         // Input/Output
         int save(char* filename);
+        //int al::var::save(std::ofstream file);
         al::var* load(char* filename);
 
     private:

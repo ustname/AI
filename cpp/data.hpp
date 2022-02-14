@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <fstream>
+#include <chrono>
 
 #pragma once
 
@@ -13,9 +15,9 @@ enum DATATYPE{
     VOID0 = 0, PTR = 1,
     UI8 = 2, UI16 = 4, UI32 = 6, UI64 = 8,
     SI8 = 10, SI16 = 12, SI32 = 14, SI64 = 16,
-    CHAR = UI8, SHORT = SI16, INT = SI32, SINGLEF = 18, DOUBLEF = 20, 
-    CHARP = 3, INTP = 15, FLOATP = 19, DOUBLEP = 21, VOIDP = 1,
-    TYPE_VAR = 23, TYPE_PROP = 25, TYPE_SEN = 27,
+    CHAR = 22, SHORT = SI16, INT = SI32, SINGLEF = 18, DOUBLEF = 20,
+    CHARP = 23, INTP = 15, FLOATP = 19, DOUBLEP = 21, VOIDP = 1,
+    TYPE_VAR = 25, TYPE_PROP = 27, TYPE_SEN = 29,
 };
 /*
 enum PROP_EDIT{
@@ -28,7 +30,7 @@ enum PROP_EDIT{
 };
 */
 
-union DATA
+union variant
 {
     uint64_t byte64;
     uint32_t byte32[2];

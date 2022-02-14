@@ -1,0 +1,97 @@
+
+Structure:
+    8 Register
+    Register A = rvalue
+    Register B = lvalue
+
+00 Return
+
+01 Set 
+    (01 08 01 08)
+    (01 08 02 00000000)
+    (01 08 03 00 0000000000000000 ...)
+    01 Register A
+    02 Register B
+    03 Register C
+    04 Register D
+    05 Register E
+    06 Register F
+    07 Register G
+    08 Register H
+    
+        01 register : 1 byte
+        02 variable 
+            01 this stack
+                4 byte index from stack
+            02 register A object
+                
+        03 value : 1 byte type, 8 byte data length, n byte data  
+
+02 Declaration (data type, variable name)
+    (02)
+    Set rvalue = variable name
+    Set lvalue = data type
+    declare()
+
+03 Definition (variable, "=", value)
+    (03)
+    Set rvalue = variable
+    Set lvalue = variable.value     |   Set lvalue = value
+    define()
+
+04 Operator (variable, operator, value)
+    (04 02 08)
+    Set rvalue = variable
+    Set lvalue = value
+
+    01 Number Operator
+        01 + : rvalue = rvalue + lvalue
+        02 - : rvalue = rvalue - lvalue
+        03 * : rvalue = rvalue * lvalue
+        04 / : rvalue = rvalue / lvalue
+        05 % : rvalue = rvalue % lvalue
+    02 Boolean Operator
+        01 < : rvalue = rvalue < lvalue
+        02 > : rvalue = rvalue > lvalue
+        03 == : rvalue = rvalue == lvalue
+        04 != : rvalue = rvalue != lvalue
+        05 <= : rvalue = rvalue <= lvalue
+        06 >= : rvalue = rvalue >= lvalue
+        07 && : rvalue = rvalue && lvalue
+        08 || : rvalue = rvalue || lvalue
+
+05 Control Flow (if, variable/value, ":")
+    (05 02 00000000)
+    Set rvalue = variable
+
+    01 front
+        if rvalue.value == true:
+            jump(int)
+    02 back
+        if rvalue.value == true:
+            jump(-int)
+
+06 Function Call (variable, "(", argument, ")")
+    (06)
+    A = A(...)
+
+        B = argument[0]
+        ...
+        call(A)
+            Set stack.var1 = B
+            ...
+            action
+            Set A = return
+        Set variable = A    
+
+07 Array (variable, "[", int/string, "]")
+    (07)
+    rvalue = rvalue[lvalue]
+
+        Set rvalue = variable
+        Set lvalue = int        |   Set lvalue = string
+        rvalue = array()
+
+#08 Element (variable, ".", element)
+    (08 00000000)
+    A = 

@@ -30,3 +30,37 @@ n byte = properties name
 1 byte = properties data type
 8 byte = properties data length
 n byte = properties data
+
+==========================================
+
+version 3
+
+4 byte = variable name length
+n byte = variable name
+4 byte = variable flags
+4 byte = variable version
+4 byte = variable properties number
+
+4 byte = properties name length
+n byte = properties name
+1 byte = properties flags
+1 byte = properties data type
+8 byte = properties data length
+n byte = properties data
+
+==========================================
+
+version 4
+
+4 byte = variable flags
+4 byte = variable name length
+n byte = variable name
+4 byte = variable version
+4 byte = variable properties number
+
+1 byte = properties flags
+4 byte = properties name length
+n byte = properties name
+1 byte = properties data type
+8 byte = properties data length
+n byte = properties data

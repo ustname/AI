@@ -1,0 +1,47 @@
+
+
+00 Return
+01 set current variable : return requested variable 8 byte
+    01 int32 : variable index from stack 4 byte
+    02 var.find(charp) : variable current child name ptr 8 byte
+    03 var.find(int32, n) : variable current child name length 4 byte, variable name n byte
+
+02 set prop : return requested properties 8 byte
+    01 int32 : from current variable prop index 4 byte
+    02 var.findprop(charp) : properties name 8 byte
+    03 var.findprop(int32, n) : properties name length 4 byte, properties name n byte
+
+03 var.create();
+    01
+        01 var.create(charp) : variable name 8 byte
+        02 var.create(charp, int64) : variable name 8 byte, variable number 8 byte
+    02
+        01 var.create(int32, n) : variable name length 4 byte, variable name n byte
+        02 var.create(int32, n, int64) : variable name length 4 byte, variable name n byte, variable number 8 byte
+
+04 var.write();
+    01
+        01 var.write(int32, charp) : properties index 4 byte, char pointer data 8 byte
+        02 var.write(int32, int64) : properties index 4 byte, signed int64 data 8 byte
+        03 var.write(int32, uint8, uint64) : properties index 4 byte, data type 1 byte, number 8 byte
+        04 var.write(int32, voidp, uint64) : properties index 4 byte, data pointer 8 byte, data length 8 byte
+    02
+        01 var.write(charp, charp) : properties name ptr 8 byte, char pointer data 8 byte
+        02 var.write(charp, int64) : properties name ptr 8 byte, signed int64 data 8 byte
+        03 var.write(charp, uint8, uint64) : properties name ptr 8 byte, data type 1 byte, number 8 byte
+        04 var.write(charp, voidp, uint64) : properties name ptr 8 byte, data pointer 8 byte, data length 8 byte
+    03
+        01 var.write(int32, n, charp) : properties name length 4 byte, properties name n byte, char pointer data 8 byte
+        02 var.write(int32, n, int64) : properties name length 4 byte, properties name n byte, signed int64 data 8 byte
+        03 var.write(int32, n, uint8, uint64) : properties name length 4 byte, properties name n byte, data type 1 byte, number 8 byte
+        04 var.write(int32, n, voidp, uint64) : properties name length 4 byte, properties name n byte, data pointer 8 byte, data length 8 byte
+ 
+05 var.read();
+    01
+        01 var.read(int32) : properties index 4 byte
+    02
+        01 var.write(charp) : properties name ptr 8 byte
+    03
+        01 var.write(int32, n) : properties name length 4 byte, properties name n byte
+
+07 

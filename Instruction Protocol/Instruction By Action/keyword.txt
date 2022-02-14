@@ -1,0 +1,7 @@
+
+
+single line
+    var, int, float, string, bool, buffer, break, continue, return
+
+multiple line
+    if, function, class, while, for

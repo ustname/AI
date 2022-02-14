@@ -1,0 +1,98 @@
+
+
+01 Declaration and Definition
+
+    Data Types = { variant, int, float, string, bool, buffer }
+
+    Declaration:
+        var name
+        int number
+        
+
+    Operator = { = }
+    Definition:
+        var name = "Andi"
+        number = 10
+
+02 Operator 
+
+    Number Operator = { +, -, *, /, % }
+    #Binary Operator = { <<, >>, &, |, ! }
+    Boolean Operator = { ==, !=, <, >, <=, >=, &&, || }
+
+03 Control Flow
+
+    if elif else
+
+    if(Boolean):
+        Action
+    elif(Boolean):
+        Action
+    else:
+        Action
+
+04 Loop
+
+    for while
+
+    for(Declaration :: int i, Boolean :: i <= limit, Action :: i += 1):
+        Action
+
+    while(Boolean):
+        Action
+
+05 Function
+
+    (Data Types)(Function name)(Data Types)
+    function function_name
+
+    void fun():
+        action
+
+    function fun_ptr = fun
+
+06 Array
+
+    []
+
+    Member:
+        int size
+        void resize(int)
+        void push_front(value)
+        void push_back(value)
+        void push_at(int, value)
+        void push_at(string, value)
+        value pop_front()
+        value pop_back()
+        value pop_at(int, value)
+        value pop_at(string, value)
+        void* front()
+        void* back()
+
+
+    int number[10]
+    number[0] = 3
+    number.push_back(9) \\ number[10] == 9
+
+07 Object
+    
+
+08 File Stream
+
+    Member:
+        int write(value)
+        int write(value[], int)
+        int read(value)
+        int read(value[], int)
+        int open(string)
+        void close()
+        bool is_open
+        string file_name
+
+09 Console input output
+
+    print and scan
+
+    print("Hello World")
+    
+    scan(num)

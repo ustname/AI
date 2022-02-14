@@ -1,0 +1,38 @@
+
+Structure:
+    8 Register
+    memory stack n byte
+
+00 Return
+
+01 Set Instruction
+    01 this instruction
+    02 vfci
+
+02 Register move (uint8 from register, uint8 to register)
+
+    Types :
+    01 Register A
+    02 Register B
+    03 Register C
+    04 Register D
+    05 Register E
+    06 Register F
+    07 Register G
+    08 Register H
+
+03 Set (int64) : set value to register A
+
+04 Compare (Register A, Register B, Register C)
+
+    01 Number Operator (Register A, Register B, uint8) Types : +, -, *, /, %
+    02 Boolean Operator (Register A, Register B, uint8) Types : ==, !=, <, >, <=, >=, &&, ||
+    03 (voidp src, voidp dst, uint64 length) : return 1 if same, 0 if not
+
+    return inverted and to Register A
+
+05 Jump (int64 jump_len)
+    if register A is true, then jump
+    + for jump forward
+    - for jump backward
+
