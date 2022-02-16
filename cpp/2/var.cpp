@@ -115,9 +115,9 @@ int var::write(variant data)
     return 0;
 }
 
-variant var::read()
+struct block* var::read()
 {
-    return this->_data;
+    return this->block;
 }
 
 // Array
@@ -220,7 +220,7 @@ block* var::operator[](int index)
 {
     if (!(this->type & TYPE_ARRAY))
     {
-        std::cerr << this->name << " is not a array type" << std::endl;
+        std::cerr << this->name << " is not an array type" << std::endl;
         exit(-1);
     }
 
@@ -391,13 +391,13 @@ var* var::struct_create(char* member, uint8_t type)
 
     var* pos;
 
-    if (count == 0)
+    if (this->count == 0)
     {
-        data1.ptr = malloc(sizeof(var));
+        this->data1.ptr = malloc(sizeof(var));
         pos = this->data1.var;
     }else
     {
-        data1.ptr = realloc(data1.ptr, ++count);
+        this->data1.ptr = realloc(data1.ptr, ++count);
         pos = &( this->data1.var[count-1] );
     }
 

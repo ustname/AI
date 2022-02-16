@@ -6,7 +6,7 @@ Structure:
 
 00 Return
 
-01 Set 
+01 Set
     (01 08 01 08)
     (01 08 02 00000000)
     (01 08 03 00 0000000000000000 ...)
@@ -20,49 +20,44 @@ Structure:
     08 Register H
     
         01 register : 1 byte
-        02 variable 
+        02 variable
             01 this stack
-                4 byte index from stack
+                index from stack : 4 byte
             02 register A object
-                
-        03 value : 1 byte type, 8 byte data length, n byte data  
+                Register B member name or index
+        03 value : type 1 byte, data1 8 byte, data2 8 byte
 
 02 Declaration (data type, variable name)
     (02)
-    Set rvalue = variable name
-    Set lvalue = data type
-    declare()
+    Set Register A = variable index
+    Set Register B = data type
+    declare(variable name, data type)
 
-03 Definition (variable, "=", value)
-    (03)
-    Set rvalue = variable
-    Set lvalue = variable.value     |   Set lvalue = value
-    define()
+03 Operator (variable, operator, value)
+    (03 02 08)
+    Set Register A = variable
+    Set Register B = value
 
-04 Operator (variable, operator, value)
-    (04 02 08)
-    Set rvalue = variable
-    Set lvalue = value
-
-    01 Number Operator
-        01 + : rvalue = rvalue + lvalue
-        02 - : rvalue = rvalue - lvalue
-        03 * : rvalue = rvalue * lvalue
-        04 / : rvalue = rvalue / lvalue
-        05 % : rvalue = rvalue % lvalue
+    01 Base Operator
+        01 =
+        02 +
+        03 -
+        04 *
+        05 /
+        06 %
     02 Boolean Operator
-        01 < : rvalue = rvalue < lvalue
-        02 > : rvalue = rvalue > lvalue
-        03 == : rvalue = rvalue == lvalue
-        04 != : rvalue = rvalue != lvalue
-        05 <= : rvalue = rvalue <= lvalue
-        06 >= : rvalue = rvalue >= lvalue
-        07 && : rvalue = rvalue && lvalue
-        08 || : rvalue = rvalue || lvalue
+        01 <
+        02 >
+        03 ==
+        04 !=
+        05 <=
+        06 >=
+        07 &&
+        08 ||
 
-05 Control Flow (if, variable/value, ":")
+04 Control Flow (if, variable/value, ":")
     (05 02 00000000)
-    Set rvalue = variable
+    Set Register A = variable
 
     01 front
         if rvalue.value == true:
@@ -71,20 +66,25 @@ Structure:
         if rvalue.value == true:
             jump(-int)
 
-06 Function Call (variable, "(", argument, ")")
+05 Function Call (variable, "(", argument, ")")
     (06)
     A = A(...)
 
         B = argument[0]
         ...
         call(A)
-            Set stack.var1 = B
+            stack[0] = argument[0]
             ...
             action
             Set A = return
-        Set variable = A    
+        Set variable = A
 
-07 Array (variable, "[", int/string, "]")
+    Set Register A = variable
+    Set Register B = argument[0]
+    ...
+    variable.call(argument)
+
+#07 Array (variable, "[", int/string, "]")
     (07)
     rvalue = rvalue[lvalue]
 

@@ -3,10 +3,13 @@
 class var
 {
 private:
-    
+    uint8_t info1;
+    uint16_t info2;
+    uint32_t info3;
 public:
     char* name;
     uint8_t type;
+    
     union 
     {
         variant _data;
@@ -25,13 +28,11 @@ public:
 
     struct block* operator[](int index);
     var* operator[](char* name);
-
     
 
-    //// Write
     // Single data
     int write(variant data);
-    variant read();
+    struct block* read();
     // Array
     int arr_write(int index, variant data);
     int64_t arr_find(variant data);
