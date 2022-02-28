@@ -1,9 +1,23 @@
 #include <iostream>
 #include <string.h>
+#include <fstream>
+
+#pragma once
 
 #define QQi(X) (variant){.i = X}
 #define QQs(X) (variant){.str = X}
 #define QQf(X) (variant){.f = X}
+
+//std::ostream& operator<<(std::ostream& stream, bool b)
+//{
+//    if(b)
+//    {
+//        stream << "true";
+//    }else
+//    {
+//        stream << "false";
+//    }
+//}
 
 class var;
 

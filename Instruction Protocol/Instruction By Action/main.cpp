@@ -3,8 +3,8 @@
 int main()
 {
     char buffer[100] = 
-    "var hello\n"
-    "var name = \"lol\"\n";
+    "int hello = 10\n"
+    "string name\n";
     //printf(buffer);
     compile(buffer, 0);
 }

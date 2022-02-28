@@ -1,0 +1,53 @@
+
+
+#class declaration
+    (SET) Register A, value TYPE_STRUCT "Struct name"
+    (SET) Register B, value TYPE_INT member count
+    (DEC) 
+    for each in member count
+        (SET) Register A, value TYPE_STRING "member name"
+        (SET) Register B, value TYPE_INT member data type
+        (DEC)
+
+object declaration
+    (SET) Register A, variable index
+    (SET) Register B, value TYPE_STRUCT "Struct name"
+    #optional
+        (SET) Register C ..., initialization argument
+    (DEC)
+
+#function declaration
+    (SET) Register A, value TYPE_STRING "function"
+    (SET) Register B, value TYPE_INT argument count
+
+function call
+    (SET) Register A, value TYPE_STRING function name
+    (SET) Register B, value argument[0]
+    ...
+    (CALL)
+
+function structure
+    function fun
+    
+    fun.name = function name
+    fun.type = TYPE_STRUCT
+    fun.data2 = "function"
+    fun.info3 = function structure member count
+    fun.data1 = {
+        .argc = argument count : TYPE_INT
+        .memc = function member count : TYPE_INT
+        .mem = function member : TYPE_STRUCT
+        .ret = function return data type : TYPE_INT
+        .data = data of function instruction : TYPE_BUFFER
+    }
+    
+class structure
+    class obj
+
+    obj.name = object name
+    obj.type = TYPE_STRUCT
+    obj.info3 = object member count
+    obj.data2 = object class name
+    obj.data1 = {
+        object structure here
+    }

@@ -1,0 +1,37 @@
+
+
+variable name length = 4 byte
+variable name = n byte (variable name length)
+data type, info1, info2, info3 = 8 byte
+
+int:
+    data = 8 byte
+
+float:
+    data = 8 byte
+
+bool:
+    data = 8 byte
+
+string:
+    length = 8 byte
+    data2 = n byte (length)
+
+buffer:
+    data1 = 8 byte
+
+reference:
+    count = 8 byte (index link count)
+    data2 = 8 byte (index link array)
+    data3 = 8 byte (target name) (optional)
+
+array:
+    count = 8 byte
+    data = n (count)
+
+struct:
+    count = 8 byte
+    struct name length = 4 byte
+    struct name = n byte (struct name length)
+    data3 = load variable
+    

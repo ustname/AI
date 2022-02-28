@@ -2,8 +2,11 @@
 
 var::var()
 {
-    this->name = 0;
+    this->name = nullptr;
     this->type = TYPE_UNKNOWN;
+    this->info1 = 0;
+    this->info2 = 0;
+    this->info3 = 0;
 }
 
 var var::init(char* name, uint8_t type)
@@ -20,22 +23,29 @@ var::var(char* name, uint8_t type)
     this->name = strdup(name);
     this->type = type;
     this->length = 0;
+    this->info1 = 0;
+    this->info2 = 0;
+    this->info3 = 0;
 }
 
 var::var(char* name, uint8_t type, int64_t arr_num)
 {
-    if (this->type & TYPE_REFERENCE)
+    if (type & TYPE_REFERENCE)
     {
         std::cerr << "Reference type are not allowed to make an array" << std::endl;
         exit(-1);
     }
 
+    
     this->name = strdup(name);
     this->type = type | TYPE_ARRAY;
     this->count = arr_num;
-
     this->block = (struct block*)malloc(sizeof(this->block) * arr_num);
     memset((void*)this->block, 0, sizeof(this->block) * arr_num);
+
+    this->info1 = 0;
+    this->info2 = 0;
+    this->info3 = 0;
 }
 
 var::~var()
@@ -43,7 +53,100 @@ var::~var()
     //std::cout << "Constructed " << this->name << std::endl;
 }
 
+var var::dup()
+{
+    var v;
+    if (this->type & TYPE_ARRAY)
+    {
+        v = var(this->name, this->type, this->count);
+
+        switch (this->type ^ TYPE_ARRAY)
+        {
+        case TYPE_INT:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                v.block[i].data1.i = this->block[i].data1.i;
+            }
+            break;
+
+        case TYPE_FLOAT:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                v.block[i].data1.f = this->block[i].data1.f;
+            }
+            break;
+
+        case TYPE_STRING:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                v.block[i].data1.str = strdup(this->block[i].data1.str);
+                v.block[i].data2.i = this->block[i].data2.i;
+            }
+            break;
+
+        case TYPE_STRUCT:
+            std::cerr << "Type struct is not allowed at duplicating " << this->name << std::endl;
+            exit(-1);
+        default:
+            break;
+        }
+
+    }else
+    {
+        v = var(this->name, this->type);
+    
+        switch (this->type)
+        {
+        case TYPE_INT:
+            v.data1.i = this->data1.i;
+            break;
+        
+        case TYPE_STRING:
+            v.data1.str = strdup(this->data1.str);
+            v.length = this->length;
+            break;
+
+        case TYPE_FLOAT:
+            v.data1.f = this->data1.f;
+            break;
+
+        default:
+            std::cerr << "Unknown data type of " << this->name << " with data type " << get_datatype(this->type) << std::endl;
+            exit(-1);
+        }
+    }
+    return v;
+}
+
 char* get_datatype(int type)
+{
+    switch (type)
+    {
+    case TYPE_UNKNOWN :
+        return strdup("Unknown");
+    case TYPE_ARRAY :
+        return strdup("Array");
+    case TYPE_STRUCT :
+        return strdup("Structure");
+    case TYPE_BOOL :
+        return strdup("Boolean");
+    case TYPE_INT :
+        return strdup("Integral");
+    case TYPE_FLOAT :
+        return strdup("Float");
+    case TYPE_STRING :
+        return strdup("String");
+    case TYPE_BUFFER :
+        return strdup("Buffer");
+    case TYPE_REFERENCE :
+        return strdup("Reference");
+
+    default:
+        return strdup("NULL");
+    }
+}
+
+char* get_datatype_i(char* type)
 {
     switch (type)
     {
@@ -83,11 +186,11 @@ int var::write(variant data)
     switch (this->type)
     {
     case TYPE_STRING:
-        if (length != 0)
+        if (this->length != 0)
         {
-            free(this->data1.str);
+            free(this->data2.str);
         }
-        this->data1.str = strdup(data.str);
+        this->data2.str = strdup(data.str);
         this->length = strlen(data.str) + 1;
         break;
     
@@ -120,6 +223,151 @@ struct block* var::read()
     return this->block;
 }
 
+int var::print()
+{
+    if ( this->type == TYPE_BUFFER )
+    {
+        std::cerr << "Cant printing buffer";
+    }
+
+    std::cout << this->name << " = ";
+
+    if (this->type & TYPE_ARRAY)
+    {
+        std::cout << "[ ";
+        size_t i = 0;
+        switch (this->type ^ TYPE_ARRAY)
+        {
+        case TYPE_INT:
+            for (i = 0; i < this->count - 1; i++)
+            {
+                std::cout << this->block[i].data1.i << ", ";
+            }
+            std::cout << this->block[i].data1.i;
+            break;
+        
+        case TYPE_FLOAT:
+            for (i = 0; i < this->count - 1; i++)
+            {
+                std::cout << this->block[i].data1.f << ", ";
+            }
+            std::cout << this->block[i].data1.f;
+            break;
+
+        case TYPE_BOOL:
+            for (i = 0; i < this->count - 1; i++)
+            {
+                if (this->block[i].data1.b)
+                {
+                    std::cout << "True, ";
+                }else
+                {
+                    std::cout << "False, ";
+                }
+            }
+            if (this->block[i].data1.b)
+            {
+                std::cout << "True";
+            }else
+            {
+                std::cout << "False";
+            }
+            break;
+        
+        case TYPE_STRING:
+            for (i = 0; i < this->count - 1; i++)
+            {
+                std::cout << "\"" << this->block[i].data2.str << "\", ";
+            }
+            std::cout << "\"" << this->block[i].data2.str << "\"";
+            break;
+
+        default:
+            break;
+        }
+        std::cout << " ]" << std::endl;
+    }
+    
+
+}
+
+int var::save(char* filename)
+{
+    std::ofstream file(filename, std::ios_base::openmode::_S_bin | std::ios_base::openmode::_S_out);
+
+    uint32_t var_name_len = strlen(this->name) + 1;
+
+    file.write((char*)&var_name_len, 4);
+    file.write(this->name, var_name_len);
+    file.write((char*)&this->type, 8);
+
+    if (this->type & TYPE_ARRAY)
+    {
+        file.write((char*)&this->count, 8);
+        switch (this->type ^ TYPE_ARRAY)
+        {
+        case TYPE_INT:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                file.write((char*)&this->block[i].data1.i, 8);
+            }
+            break;
+        
+        case TYPE_FLOAT:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                file.write((char*)&this->block[i].data1.f, 8);
+            }
+            break;
+
+        case TYPE_BOOL:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                file.write((char*)&this->block[i].data1.b, 8);
+            }
+            break;
+
+        case TYPE_STRING:
+            for (size_t i = 0; i < this->count; i++)
+            {
+                file.write((char*)&this->block[i].data1.i, 8);
+                file.write(this->block[i].data2.str, this->block[i].data1.i + 1);
+            }
+            break;
+
+        default:
+            break;
+        }
+    }else
+    {
+        switch (this->type)
+        {
+        case TYPE_INT:
+            file.write((char*)&this->data1.i, 8);
+            break;
+
+        case TYPE_FLOAT:
+            file.write((char*)&this->data1.f, 8);
+            break;
+
+        case TYPE_STRING:
+            file.write((char*)&this->length, 8);
+            file.write(this->data2.str, this->length);
+            break;
+
+        case TYPE_BOOL:
+            file.write((char*)&this->data1.b, 8);
+            break;
+        
+        default:
+            break;
+        }
+    }
+
+    file.close();
+    return 0;
+}
+
 // Array
 int var::arr_write(int index, variant data)
 {
@@ -150,8 +398,8 @@ int var::arr_write(int index, variant data)
         break;
     
     case TYPE_STRING: //std::cout << index;
-        this->block[index].data1.str = strdup(data.str);
-        this->block[index].data2.i = strlen(data.str) + 1;
+        this->block[index].data1.i = strlen(data.str);
+        this->block[index].data2.str = strdup(data.str);
         break;
         
     default:
@@ -161,7 +409,7 @@ int var::arr_write(int index, variant data)
     
     return 0;
 }
-
+// dont use this
 int64_t var::arr_find(variant data)
 {
     if (this->type != TYPE_ARRAY)
@@ -329,13 +577,14 @@ var* var::struct_find(char* member)
     }
 
     //int member_len = strlen(member);
-    var* temp = this->data1.var;
+    var* temp = this->data3.var;
+    int64_t count = this->count;
 
-    for (size_t i = 0; i < count; i++)
+    for ( size_t i = 0; i < count; i++ )
     {   //std::cout << member << " " << temp[i].name;
         if ( strcmp(temp[i].name, member) == 0 )
         {
-            return &( ( (var*)this->data1.ptr )[i] );
+            return &( ( (var*)this->data3.var )[i] );
         }
     }
     return 0;
@@ -393,16 +642,16 @@ var* var::struct_create(char* member, uint8_t type)
 
     if (this->count == 0)
     {
-        this->data1.ptr = malloc(sizeof(var));
-        pos = this->data1.var;
+        this->data3.ptr = malloc(sizeof(var));
+        pos = this->data3.var; //printf("%p, ", pos);
     }else
     {
-        this->data1.ptr = realloc(data1.ptr, ++count);
-        pos = &( this->data1.var[count-1] );
+        this->data3.ptr = realloc(data3.ptr, ++count);
+        pos = &( this->data3.var[count-1] ); //printf("%p, ", pos);
     }
 
     this->count++;
-    *pos = var::init(member, type);
+    *pos = var::init(member, type);//std::cout << "junhbygvt";
     //std::cout << pos->name;
     return pos;
 }

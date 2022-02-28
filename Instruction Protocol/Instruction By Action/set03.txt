@@ -1,0 +1,18 @@
+
+
+file format
+
+    struct _root
+        struct _system
+            class declaration
+            function declaration
+            global variable declaration
+        
+        struct main
+            #main instruction for program
+            variable declaration
+
+function format
+    4 byte main variable count 
+    n byte instruction
+    1 byte(00) returning

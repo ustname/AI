@@ -24,13 +24,17 @@ Structure:
             01 this stack
                 index from stack : 4 byte
             02 register A object
-                Register B member name or index
+                Register B member index
+                01 stop
+                02 keep finding : member index 4 byte
+            02 register A array
+                Register B index : 8 byte
         03 value : type 1 byte, data1 8 byte, data2 8 byte
 
 02 Declaration (data type, variable name)
     (02)
-    Set Register A = variable index
-    Set Register B = data type
+    Set Register A = data type
+    Set Register B = variable name
     declare(variable name, data type)
 
 03 Operator (variable, operator, value)

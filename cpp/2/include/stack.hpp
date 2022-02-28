@@ -11,27 +11,27 @@ public:
 
     T pop()
     {
+        data = (T*)realloc(data, sizeof(T) * (size-1));
         T temp = data[size-1];
-        data = (T*)realloc(data, (size-1) * sizeof(T));
         size--;
         return temp;
     }
 
     void push(T input)
     {
-        data = (T*)realloc(data, (size+1) * sizeof(T));
+        data = (T*)realloc(data, sizeof(T) * (size+1));
         data[size] = input;
         size++;
     }
     
     T operator[](int index)
     {
-        if (index+1 > size)
-        {
-            return 0;
-        }
+        //if (index+1 > size)
+        //{
+        //    return T{};
+        //}
         
-        return &data[index];
+        return data[index];
     }
 
     void erase()
