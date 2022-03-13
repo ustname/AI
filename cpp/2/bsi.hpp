@@ -1,9 +1,11 @@
 #include "var.hpp"
-#include "include/sen.hpp"
+
+#pragma once
 
 namespace bsi
 {
-    var* _system = nullptr;
-    var* _main = nullptr;
-    int read(char* str);
+    
+    int read(var* stack, char* str);
 }
+
+extern var* _system;

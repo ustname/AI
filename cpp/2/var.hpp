@@ -1,4 +1,5 @@
 #include "include/data.hpp"
+
 #pragma once
 
 class var
@@ -16,12 +17,12 @@ public:
     {
         variant _data;
         variant data1;
-        int64_t length;
-        int64_t count;
+        int64_t length; //This is data 1
+        int64_t count; //This is data 1
         
     };
     
-    union 
+    union //This is data 2
     {
         struct block* block;
         variant data2;
@@ -31,7 +32,8 @@ public:
 
     // Single data
     int write(variant data);
-    struct block* read();
+    int write(var& data);
+    variant read();
     int print();
     int save(char* filename);
     // Array
@@ -54,8 +56,8 @@ public:
     var(char* name, uint8_t type);
     var(char* name, uint8_t type, int64_t arr_num);
     var dup();
-    ~var();
+    void clear();
 };
 
 char* get_datatype(int type);
-char* get_datatype_i(char* type);
+int get_datatype_i(char* type);

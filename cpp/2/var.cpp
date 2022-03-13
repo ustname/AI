@@ -4,6 +4,7 @@ var::var()
 {
     this->name = nullptr;
     this->type = TYPE_UNKNOWN;
+    this->length = 0;
     this->info1 = 0;
     this->info2 = 0;
     this->info3 = 0;
@@ -20,7 +21,14 @@ var var::init(char* name, uint8_t type)
 
 var::var(char* name, uint8_t type)
 {
-    this->name = strdup(name);
+    if (name != 0)
+    {
+        this->name = strdup(name);
+    }else
+    {
+        this->name = strdup("(NULL)");
+    }
+    
     this->type = type;
     this->length = 0;
     this->info1 = 0;
@@ -48,9 +56,29 @@ var::var(char* name, uint8_t type, int64_t arr_num)
     this->info3 = 0;
 }
 
-var::~var()
+void var::clear()
 {
-    //std::cout << "Constructed " << this->name << std::endl;
+    char buffer[1000];
+    strcpy(buffer, this->name);
+    if (this->name)
+    {
+        delete this->name;
+    }
+    
+    if (this->type & TYPE_ARRAY)
+    {
+        delete this->block;
+    } else if (this->type == TYPE_STRUCT)
+    {
+        //delete this->data2.str;
+        if (this->count)
+        {
+            delete this->data3.var;
+        }//std::cout << ",kijnuhbygv";
+    }
+    
+
+    //std::cout << "Destroyed " << buffer << std::endl;
 }
 
 var var::dup()
@@ -146,32 +174,42 @@ char* get_datatype(int type)
     }
 }
 
-char* get_datatype_i(char* type)
+static bool sen_comp(char* str, char* prod)
 {
-    switch (type)
-    {
-    case TYPE_UNKNOWN :
-        return strdup("Unknown");
-    case TYPE_ARRAY :
-        return strdup("Array");
-    case TYPE_STRUCT :
-        return strdup("Structure");
-    case TYPE_BOOL :
-        return strdup("Boolean");
-    case TYPE_INT :
-        return strdup("Integral");
-    case TYPE_FLOAT :
-        return strdup("Float");
-    case TYPE_STRING :
-        return strdup("String");
-    case TYPE_BUFFER :
-        return strdup("Buffer");
-    case TYPE_REFERENCE :
-        return strdup("Reference");
+    //int max_len = stop_at(str, "\n");
+    int prod_len = strlen(prod);
 
-    default:
-        return strdup("NULL");
+    for (size_t i = 0; i < prod_len; i++)
+    {
+        if (prod[i] != str[i])
+        {
+            return false;
+        }
     }
+    return true;
+}
+
+int get_datatype_i(char* type)
+{
+    if (sen_comp(type, "int"))
+    {
+        return TYPE_INT;
+    }else if (sen_comp(type, "float"))
+    {
+        return TYPE_FLOAT;
+    }else if (sen_comp(type, "bool"))
+    {
+        return TYPE_BOOL;
+    }else if (sen_comp(type, "string"))
+    {
+        return TYPE_STRING;
+    }else
+    {
+        std::cerr << "Undefined " << type << std::endl;
+        exit(-1);
+    }
+    
+    
 }
 
 // Single data
@@ -218,9 +256,84 @@ int var::write(variant data)
     return 0;
 }
 
-struct block* var::read()
+int var::write(var& v)
 {
-    return this->block;
+    if ( (this->type == TYPE_ARRAY) || (this->type == TYPE_STRUCT) || (this->type == TYPE_BUFFER) )
+    {
+        std::cerr << "Cant write single data into \"" << this->name << "\" since the data type was " << get_datatype(this->type) << std::endl;
+        exit(-1);
+    }else if ( (v.type == TYPE_ARRAY) || (v.type == TYPE_STRUCT) || (v.type == TYPE_BUFFER) )
+    {
+        std::cerr << "Cant write single data into \"" << this->name << "\" since the data type was " << get_datatype(this->type) << " from variable " << v.name << " has data type " << get_datatype(v.type) << std::endl;
+        exit(-1);
+    }
+    
+    if (this->type != v.type)
+    {
+        std::cerr << "Cant write " << v.name << " into " << this->name << std::endl;
+        exit(-1);
+    }
+
+    switch (this->type)
+    {
+    case TYPE_STRING:
+        if (this->length != 0)
+        {
+            free(this->data2.str);
+        }
+        this->data2.str = strdup(v.data2.str);
+        this->length = v.length;
+        break;
+    
+    case TYPE_INT:
+        this->data1.i = v.data1.i;
+        break;
+
+    case TYPE_FLOAT:
+        this->data1.f = v.data1.f;
+        break;
+
+    case TYPE_REFERENCE:
+        std::cout << "Not yet coded :p" << std::endl;
+        exit(-1);
+        break;
+
+    case TYPE_BOOL:
+        this->data1.b = v.data1.b;
+        break;
+
+    default:
+        std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
+        exit(-1);
+    }
+    
+    return 0;
+}
+
+variant var::read()
+{
+    switch (this->type)
+    {
+    case TYPE_INT:
+        return data1;
+        break;
+
+    case TYPE_FLOAT:
+        return data1;
+        break;
+
+    case TYPE_BOOL:
+        return data1;
+        break;
+
+    case TYPE_STRING:
+        return data2;
+        break;
+    
+    default:
+        break;
+    }
+    return this->data1;
 }
 
 int var::print()
@@ -230,8 +343,14 @@ int var::print()
         std::cerr << "Cant printing buffer";
     }
 
-    std::cout << this->name << " = ";
-
+    if (this->name == nullptr)
+    {
+        std::cout << "(NULL) = ";
+    }else
+    {
+        std::cout << this->name << " = ";
+    }
+    
     if (this->type & TYPE_ARRAY)
     {
         std::cout << "[ ";
@@ -286,7 +405,48 @@ int var::print()
             break;
         }
         std::cout << " ]" << std::endl;
+    }else if (this->type == TYPE_STRUCT)
+    {
+        std::cout << "not yet coded :p"; exit(9);
+    }else
+    {
+        switch (this->type)
+        {
+        case TYPE_INT:
+            std::cout << this->data1.i;
+            break;
+
+        case TYPE_FLOAT:
+            std::cout << this->data1.f;
+            break;
+
+        case TYPE_BOOL:
+            if (this->data1.b)
+            {
+                std::cout << "True";
+            }else
+            {
+                std::cout << "False";
+            }
+            break;
+
+        case TYPE_STRING:
+            if (this->length)
+            {
+                std::cout << this->data2.str;
+            }else
+            {
+                std::cout << "(NULL)";
+            }
+            break;
+        
+        default:
+            break;
+        }
+        std::cout << std::endl;
     }
+    
+    
     
 
 }
@@ -631,12 +791,11 @@ var* var::struct_create(char* member, uint8_t type)
         exit(-1);
     }
 
-    if (this->struct_find(member))
-    {
-        std::cerr << this->name << " already has " << member << std::endl;
-        exit(-1);
-    }
-    
+    //if (this->struct_find(member))
+    //{
+    //    std::cerr << this->name << " already has " << member << std::endl;
+    //    exit(-1);
+    //}
 
     var* pos;
 

@@ -1,13 +1,6 @@
 #include "data.hpp"
 
-class sen
-{
-    char** word;
-    
-public:
-    uint64_t size;
-
-};
+#pragma once
 
 uint64_t stop_at(char *str, char *token)
 {
@@ -42,7 +35,7 @@ uint64_t stop_at(char *str, char *token)
         i++;
     }
 
-    return 0;
+    return i;
 }
 
 char* skip_at(char* str, char* token)
@@ -71,11 +64,11 @@ uint64_t name_len(char* str)
     int i = 0;
 
     if (str[i] >= '0' && str[i] <= '9')
-    {//
+    {
         return 0;
     }
     i++;
-//std::cout << (int)str[i];
+
     while (str[i++])
     {
         if (str[i] >= '0' && str[i] <= '9')
@@ -116,4 +109,54 @@ bool sen_comp(char* str, char* prod)
         }
     }
     return true;
+}
+
+char* strndup(char* str, uint64_t len)
+{
+    char* data = (char*)malloc(len+1);
+    memcpy(data, str, len);
+    data[len] = 0;
+    return data;
+}
+
+int guess_number(char* str, var& v)
+{
+    int i = 0;
+    int type = 0;
+    int64_t integers;
+    double floating;
+
+    if (str[i] == '-')
+    {
+        ++i;
+    }
+
+    while (str[i])
+    {
+        if (str[i] >= '0' && str[i] <= '9')
+        {
+            ++i;
+            continue;
+        }else if (str[i] == '.' || str[i] == 'f')
+        {
+            type = TYPE_FLOAT;
+            break;
+        }
+        type = TYPE_INT;
+        break;
+    }
+
+    v = var("Guessed number", type);
+
+    if (type == TYPE_INT)
+    {
+        integers = atoll(str);
+        v.write(QQi(integers));
+    }else if(type == TYPE_FLOAT)
+    {
+        floating = atof(str);
+        v.write(QQi(floating));
+    }
+
+    return type;
 }
