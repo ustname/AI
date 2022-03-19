@@ -5,7 +5,7 @@
 namespace bsi
 {
     
-    int read(var* stack, char* str);
+    int read(var& stack, char* str);
 }
 
 extern var* _system;

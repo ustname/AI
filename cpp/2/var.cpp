@@ -12,7 +12,7 @@ var::var()
 
 var var::init(char* name, uint8_t type)
 {
-    var lokal;
+    var& lokal = *this;
     lokal.name = strdup(name);
     lokal.type = type;
     lokal.length = 0;
@@ -790,27 +790,27 @@ var* var::struct_create(char* member, uint8_t type)
         std::cerr << this->name << " is not an structure" << std::endl;
         exit(-1);
     }
-
+    
     //if (this->struct_find(member))
     //{
     //    std::cerr << this->name << " already has " << member << std::endl;
     //    exit(-1);
     //}
-
+//printf("creating %s ", member);
     var* pos;
 
     if (this->count == 0)
     {
         this->data3.ptr = malloc(sizeof(var));
-        pos = this->data3.var; //printf("%p, ", pos);
+        pos = this->data3.var; //printf("allloc pos = %p, ", pos);
     }else
     {
         this->data3.ptr = realloc(data3.ptr, ++count);
-        pos = &( this->data3.var[count-1] ); //printf("%p, ", pos);
+        pos = &( this->data3.var[count-1] ); //printf("realloc pos = %p, ", pos);
     }
 
     this->count++;
-    *pos = var::init(member, type);//std::cout << "junhbygvt";
+    pos->init(member, type);//std::cout << "junhbygvt";
     //std::cout << pos->name;
     return pos;
 }

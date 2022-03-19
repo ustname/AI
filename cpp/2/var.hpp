@@ -52,7 +52,7 @@ public:
     //var* struct_write(char* member, _data data);
 
     var();
-    var static init(char* member, uint8_t type);
+    var init(char* member, uint8_t type);
     var(char* name, uint8_t type);
     var(char* name, uint8_t type, int64_t arr_num);
     var dup();

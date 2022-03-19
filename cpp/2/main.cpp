@@ -5,14 +5,16 @@ extern int read_value(char* str, var& v);
 
 int main()
 {
-    //char* s = "int World \"lol\" <= = 1.0911 angka";
-    //bsi::read(0, s);
-    var parent("parent", TYPE_STRUCT);
-    parent.clear();
-    parent = var("parent", TYPE_STRUCT);
-    parent.struct_create("a", TYPE_INT);
-    parent.struct_write("a", QQi(9));
-    parent["a"]->print();
+    char* s = "int num = x*7 \n\nstring num = \"fortinait\"  \nint num = 9090"; //printf("top(%p) ", s);
+    var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);printf(" [%p] ", parent);
+    parent.struct_create("x", TYPE_INT)->write(QQi(9));
+    bsi::read(parent, s);
+    parent["num"]->print();
+    //parent.clear();
+    //parent = var("parent", TYPE_STRUCT);
+    //parent.struct_create("a", TYPE_INT);
+    //parent.struct_write("a", QQi(9));
+    //parent["a"]->print();
     //bsi::read(&parent, s);
     //std::cout << parent.data3.var[0].name;
     //print_len(s, name_len(s));
