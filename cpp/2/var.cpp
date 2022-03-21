@@ -12,11 +12,11 @@ var::var()
 
 var var::init(char* name, uint8_t type)
 {
-    var& lokal = *this;
-    lokal.name = strdup(name);
-    lokal.type = type;
-    lokal.length = 0;
-    return lokal;
+    var* lokal = this;
+    lokal->name = strdup(name);
+    lokal->type = type;
+    lokal->length = 0;
+    return *lokal;
 }
 
 var::var(char* name, uint8_t type)
@@ -739,9 +739,9 @@ var* var::struct_find(char* member)
     //int member_len = strlen(member);
     var* temp = this->data3.var;
     int64_t count = this->count;
-
+    //std::cout << count;
     for ( size_t i = 0; i < count; i++ )
-    {   //std::cout << member << " " << temp[i].name;
+    {   //std::cout << member << ": :" << temp[i].name;
         if ( strcmp(temp[i].name, member) == 0 )
         {
             return &( ( (var*)this->data3.var )[i] );
@@ -805,12 +805,12 @@ var* var::struct_create(char* member, uint8_t type)
         pos = this->data3.var; //printf("allloc pos = %p, ", pos);
     }else
     {
-        this->data3.ptr = realloc(data3.ptr, ++count);
-        pos = &( this->data3.var[count-1] ); //printf("realloc pos = %p, ", pos);
+        this->data3.ptr = realloc(data3.ptr, this->count+1);
+        pos = &( this->data3.var[count] ); //printf("realloc pos = %p, ", pos);
     }
 
     this->count++;
-    pos->init(member, type);//std::cout << "junhbygvt";
+    pos->init(member, type); //std::cout << "Created " << pos->name << this->count;
     //std::cout << pos->name;
     return pos;
 }

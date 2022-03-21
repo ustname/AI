@@ -5,11 +5,12 @@ extern int read_value(char* str, var& v);
 
 int main()
 {
-    char* s = "int num = x*7 \n\nstring num = \"fortinait\"  \nint num = 9090"; //printf("top(%p) ", s);
+    char* s = "float num = x * 7 \n\n num = num * 9.8"; //printf("top(%p) ", s);
     var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);printf(" [%p] ", parent);
     parent.struct_create("x", TYPE_INT)->write(QQi(9));
     bsi::read(parent, s);
     parent["num"]->print();
+    int number = 0;
     //parent.clear();
     //parent = var("parent", TYPE_STRUCT);
     //parent.struct_create("a", TYPE_INT);

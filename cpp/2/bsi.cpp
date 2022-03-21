@@ -336,7 +336,7 @@ int declare(var& root, std::vector<unit>& line, var** right_value)
         }
 
         var* pos = root.struct_find(line[1].info2.str);
-
+//std::cout << "broke " << line[1].info2.str;
         if (pos != nullptr)
         {
             std::cerr << "Redeclaration of " << line[1].info2.str << std::endl;
@@ -345,7 +345,7 @@ int declare(var& root, std::vector<unit>& line, var** right_value)
         
         switch (ret)
         {
-        case 1:
+        case 1: 
             *right_value = root.struct_create(line[1].info2.str, TYPE_INT);//if (line[3].info1 == UNIT_NAME)  printf(" from declare {%p} %s\n", line[3].info2.str, line[3].info2.str);
             return 1;
 
@@ -484,6 +484,492 @@ int read_operator(char* str, int& len)
         break;
     }
     return 0;
+}
+
+double read_value_float(var& root, std::vector<unit>& line, int offset)
+{
+    double value1;
+    double value2 = 0;
+    int op_before = 0;
+    var* value_from_var;
+
+    //value1 = line[offset].info1
+
+    /// Opening
+    if (line[offset].info1 == UNIT_NAME)
+    {
+        //printf("{%p}", line[offset].info2.str);
+        //std::cout << line[offset].info2.str;
+        value_from_var = root.struct_find(line[offset].info2.str);
+        if (value_from_var->type == TYPE_INT)
+        {
+            value1 = value_from_var->data1.i;
+        }else if (value_from_var->type == TYPE_FLOAT)
+        {
+            value1 = value_from_var->data1.f;
+        }
+        
+        ++offset;
+        if (offset == line.size())
+        {
+            goto read_value_float_final;
+        }
+    }else if (line[offset].info1 == UNIT_VALUE)
+    {
+        if (line[offset].info2.i == TYPE_INT)
+        {
+            value1 = line[offset].info3.i;
+        }else if (line[offset].info2.i == TYPE_FLOAT)
+        {
+            value1 = line[offset].info3.f;
+        }
+        ++offset;
+        if (offset == line.size())
+        {
+            goto read_value_float_final;////
+        }
+    }
+    
+    
+    read_value_float_top:
+    ////line[offset].dump();
+    if (line[offset].info1 == UNIT_OPERATOR)
+    {
+        /////////// INT PLUS
+        if (line[offset].info2.i == OP_PLUS)
+        {
+            ++offset;
+            if (offset == line.size())
+            {
+                std::cerr << "Expected an expression" << std::endl;
+                exit(-1);
+            }
+
+            /// READ value
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                value_from_var = root.struct_find(line[offset].info2.str);
+                if (value_from_var->type == TYPE_INT)
+                {
+                    value2 = value_from_var->data1.i;
+                }else if (value_from_var->type == TYPE_FLOAT)
+                {
+                    value2 = value_from_var->data1.f;
+                }
+            }else if (line[offset].info1 == UNIT_VALUE)
+            {
+                if (line[offset].info2.i == TYPE_INT)
+                {
+                    value2 = line[offset].info3.i;
+                }else if (line[offset].info2.i == TYPE_FLOAT)
+                {
+                    value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }
+            //std::cout << "jinuhbygvt";
+
+            read_value_float_plus:
+            ++offset;
+            if (offset == line.size())
+            {
+                value1 += value2;
+                goto read_value_float_final;
+            }
+            /////////// INT PLUS MUL
+            if (line[offset].info2.i == OP_MUL)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 *= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 *= value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 *= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 *= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_plus;
+            }else if (line[offset].info2.i == OP_DIV)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 /= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 = value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 /= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 /= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_plus;
+            }else if (line[offset].info2.i == OP_PLUS)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 += value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 += value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 += line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 += line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_plus;
+            }else if (line[offset].info2.i == OP_MINUS)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 -= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 -= value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 -= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 -= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_plus;
+            }
+            
+            
+        }
+        /////////// INT MINUS
+        else if (line[offset].info2.i == OP_MINUS)
+        {
+            ++offset;
+            if (offset == line.size())
+            {
+                std::cerr << "Expected an expression" << std::endl;
+                exit(-1);
+            }
+
+            /// READ value
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                value_from_var = root.struct_find(line[offset].info2.str);
+                if (value_from_var->type == TYPE_INT)
+                {
+                    value2 = value_from_var->data1.i;
+                }else if (value_from_var->type == TYPE_FLOAT)
+                {
+                    value2 = value_from_var->data1.f;
+                }
+            }else if (line[offset].info1 == UNIT_VALUE)
+            {
+                if (line[offset].info2.i == TYPE_INT)
+                {
+                    value2 = line[offset].info3.i;
+                }else if (line[offset].info2.i == TYPE_FLOAT)
+                {
+                    value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }
+            
+
+            read_value_float_minus:
+            ++offset;
+            if (offset == line.size())
+            {
+                value1 -= value2;
+                goto read_value_float_final;
+            }
+            /////////// INT PLUS MUL
+            if (line[offset].info2.i == OP_MUL)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 *= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 *= value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 *= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 *= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_minus;
+            }else if (line[offset].info2.i == OP_DIV)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 /= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 /= value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 /= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 /= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_minus;
+            }else if (line[offset].info2.i == OP_PLUS)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 -= value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 -= value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 -= line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 -= line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_minus;
+            }else if (line[offset].info2.i == OP_MINUS)
+            {
+                ++offset;
+                if (offset == line.size())
+                {
+                    std::cerr << "Expected an expression" << std::endl;
+                    exit(-1);
+                }
+    
+                /// READ value
+                if (line[offset].info1 == UNIT_NAME)
+                {
+                    value_from_var = root.struct_find(line[offset].info2.str);
+                    if (value_from_var->type == TYPE_INT)
+                    {
+                        value2 += value_from_var->data1.i;
+                    }else if (value_from_var->type == TYPE_FLOAT)
+                    {
+                        value2 += value_from_var->data1.f;
+                    }
+                }else if (line[offset].info1 == UNIT_VALUE)
+                {
+                    if (line[offset].info2.i == TYPE_INT)
+                    {
+                        value2 += line[offset].info3.i;
+                    }else if (line[offset].info2.i == TYPE_FLOAT)
+                    {
+                        value2 += line[offset].info3.f;
+                    }
+                }
+                goto read_value_float_minus;
+            }
+            
+            
+
+        
+        }
+        /////////// INT MUL
+        else if (line[offset].info2.i == OP_MUL)
+        {//std::cout << "ueueue";
+            ++offset;
+            if (offset == line.size())
+            {
+                std::cerr << "Expected an expression" << std::endl;
+                exit(-1);
+            }
+
+            /// READ value
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                value_from_var = root.struct_find(line[offset].info2.str);
+                if (value_from_var->type == TYPE_INT)
+                {
+                    value2 = value_from_var->data1.i;
+                }else if (value_from_var->type == TYPE_FLOAT)
+                {
+                    value2 = value_from_var->data1.f;
+                }
+            }else if (line[offset].info1 == UNIT_VALUE)
+            {
+                if (line[offset].info2.i == TYPE_INT)
+                {
+                    value2 = line[offset].info3.i;
+                }else if (line[offset].info2.i == TYPE_FLOAT)
+                {
+                    value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }
+
+            value1 *= value2;
+            ++offset;
+            if (offset == line.size())
+            {
+                goto read_value_float_final;
+            }else
+            {
+                goto read_value_float_top;
+            }
+        }
+        /////////// INT DIV
+        else if (line[offset].info2.i == OP_DIV)
+        {
+            ++offset;
+            if (offset == line.size())
+            {
+                std::cerr << "Expected an expression" << std::endl;
+                exit(-1);
+            }
+
+            /// READ value
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                value_from_var = root.struct_find(line[offset].info2.str);
+                if (value_from_var->type == TYPE_INT)
+                {
+                    value2 = value_from_var->data1.i;
+                }else if (value_from_var->type == TYPE_FLOAT)
+                {
+                    value2 = value_from_var->data1.f;
+                }
+            }else if (line[offset].info1 == UNIT_VALUE)
+            {
+                if (line[offset].info2.i == TYPE_INT)
+                {
+                    value2 = line[offset].info3.i;
+                }else if (line[offset].info2.i == TYPE_FLOAT)
+                {
+                    value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }
+
+            value1 /= value2;
+            ++offset;
+            if (offset == line.size())
+            {
+                goto read_value_float_final;
+            }else
+            {
+                goto read_value_float_top;
+            }
+        }else
+        {
+            line[offset].dump();
+            std::cerr << " are not allowed" <<std::endl;
+            exit(-1);
+        }
+        
+    }
+    
+    
+    read_value_float_final:
+    return value1;
 }
 
 int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
@@ -971,42 +1457,12 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
 int right_value(var& root, std::vector<unit>& line, int offset, var& stored)
 {
     int data_type;
-    //variant& _data = stored.data1;
     var* temp;
-
-    //switch (line[offset].info1)
-    //{
-//
-    //case UNIT_OPERATOR:
-    //    std::cerr << "Expected an expression" << std::endl;
-    //    exit(-1);
-    //    break;
-//
-    //case UNIT_NAME:
-    //    temp = root.struct_find(line[offset].info2.str);
-    //    if (temp == nullptr)
-    //    {
-    //        std::cerr << "Undefined " << line[offset].info2.str << std::endl;
-    //        exit(-1);
-    //    }
-    //    data_type = temp->type;
-    //    break;
-//
-    //case UNIT_VALUE:
-    //    data_type = line[offset].info2.i;
-    //    break;
-//
-    //}
-
-    //if (stored.type != data_type)
-    //{
-    //    std::cerr << "Expected " << get_datatype(stored.type) << " but the data type is " << get_datatype(data_type) << std::endl;
-    //    exit(-1);
-    //}
-    data_type = stored.type;
     variant value1;
     variant value2;
     int mul_or_div_before = 0;
+
+    data_type = stored.type;
     switch (data_type)
     {
     case TYPE_INT: //printf(" right value {%p} %s\n", line[offset].info2.str, line[offset].info2.str);
@@ -1016,7 +1472,9 @@ int right_value(var& root, std::vector<unit>& line, int offset, var& stored)
         break;
 
     case TYPE_FLOAT:
-        stored.write( QQf(line[offset].info3.f) );
+        value1.f = read_value_float(root, line, offset);
+        //std::cout << "here";
+        stored.write( value1 );
         break;
 
     case TYPE_STRING:
@@ -1242,24 +1700,38 @@ int bsi::read(var& root, char* str)
     int i = 0;
     while (last_line_ret = read_line(str+last_line_len, line))
     {//std::cout << "counter = " << i++ << std::endl;
-        
+        //exit(-1);
         //unit_print(line);//if (line[3].info1 == UNIT_NAME)  printf(" from bsi::read {%p} %s\n", line[3].info2.str, line[3].info2.str);
-        //int ret = declare(root, line, &left_value);
-        //if (ret == 1)
-        //{
-        //    if (line[2].info1 == UNIT_OPERATOR)
-        //    {
-        //        if (line[2].info2.i == OP_EQUAL)
-        //        {//std::cout << (int64_t)line[3].info1;
-        //            temp.type = left_value->type; 
-        //            ret = right_value(root, line, 3, temp); 
-        //            left_value->write(temp);
-        //            //std::cout << "lol";
-        //        }
-        //    }
-        //}
-        //root.print();
+        int ret = declare(root, line, &left_value);
+        if (ret == 1)
+        {
+            if (line[2].info1 == UNIT_OPERATOR)
+            {
+                if (line[2].info2.i == OP_EQUAL)
+                {
+                    temp.type = left_value->type;
+                    ret = right_value(root, line, 3, temp); 
+                    left_value->write(temp);
+                }
+            }
+        }else if (line[0].info1 == UNIT_NAME)
+        {
+            left_value = root.struct_find(line[0].info2.str);
+            if (!left_value)
+            {
+                std::cerr << "Undefined " << line[0].info2.str << std::endl;
+                exit(-1);
+            }
+            if (line[1].info2.i == OP_EQUAL)
+            {
+                temp.type = left_value->type;
+                ret = right_value(root, line, 2, temp); 
+                left_value->write(temp);
+            }
+        }
         
+        //root.print();
+        //
         unit_clear(line); 
         line = std::vector<unit>();
         //line.clear();
@@ -1267,7 +1739,7 @@ int bsi::read(var& root, char* str)
     }
     //unit_clear(line);
     //line.~vector();
-    std::cout << "out";
+    //std::cout << "out";
     
     //root["num"]->print();
 
