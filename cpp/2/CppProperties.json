@@ -1,0 +1,18 @@
+{
+  "configurations": [
+    {
+      "inheritEnvironments": [
+        "mingw_64"
+      ],
+      "name": "Mingw64",
+        "includePath": [
+            "${env.INCLUDE}",
+            "${workspaceRoot}\\**",
+            "C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\BSI",
+            "C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\include",
+            "C:\\msys64\\mingw64\\include\\c++\\11.2.0"
+        ],
+      "intelliSenseMode": "linux-gcc-x64"
+    }
+  ]
+}

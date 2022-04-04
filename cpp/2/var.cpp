@@ -19,6 +19,29 @@ var var::init(char* name, uint8_t type)
     return *lokal;
 }
 
+var::var(uint8_t type)
+{
+    this->name = nullptr;
+    this->type = type;
+    this->length = 0;
+    this->info1 = 0;
+    this->info2 = 0;
+    this->info3 = 0;
+}
+
+var::var(uint8_t type, int64_t arr_num)
+{
+    this->name = nullptr;
+    this->type = type | TYPE_ARRAY;
+    this->count = arr_num;
+    this->block = (struct block*)malloc(sizeof(struct block) * arr_num);
+    memset((void*)this->block, 1, sizeof(struct block) * arr_num);
+
+    this->info1 = 0;
+    this->info2 = 0;
+    this->info3 = 0;
+}
+
 var::var(char* name, uint8_t type)
 {
     if (name != 0)
@@ -48,8 +71,8 @@ var::var(char* name, uint8_t type, int64_t arr_num)
     this->name = strdup(name);
     this->type = type | TYPE_ARRAY;
     this->count = arr_num;
-    this->block = (struct block*)malloc(sizeof(this->block) * arr_num);
-    memset((void*)this->block, 0, sizeof(this->block) * arr_num);
+    this->block = (struct block*)malloc(sizeof(this->block) * arr_num*2);
+    memset((void*)this->block, 0, sizeof(this->block) * arr_num*2);
 
     this->info1 = 0;
     this->info2 = 0;
@@ -71,9 +94,10 @@ void var::clear()
     } else if (this->type == TYPE_STRUCT)
     {
         //delete this->data2.str;
-        if (this->count)
+        if (this->struct_count)
         {
-            delete this->data3.var;
+            delete this->struct_data;
+            this->struct_count = 0;
         }//std::cout << ",kijnuhbygv";
     }
     
@@ -81,61 +105,99 @@ void var::clear()
     //std::cout << "Destroyed " << buffer << std::endl;
 }
 
-var var::dup()
+var* var::dup(char* name)
 {
-    var v;
+    var* v;
+    
     if (this->type & TYPE_ARRAY)
     {
-        v = var(this->name, this->type, this->count);
+        v = new var(this->type, this->count);
+        if (name)
+        {
+            v->name = strdup(name);
+            
+        }
 
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
             for (size_t i = 0; i < this->count; i++)
             {
-                v.block[i].data1.i = this->block[i].data1.i;
-            }
+                v->block[i].data1.i = this->block[i].data1.i;
+            }//std::cout << (int64_t)v->name[1];printf("%p, ", &v->block[i].data1.i);printf("end %p", v->name);
+            
             break;
 
         case TYPE_FLOAT:
             for (size_t i = 0; i < this->count; i++)
             {
-                v.block[i].data1.f = this->block[i].data1.f;
+                v->block[i].data1.f = this->block[i].data1.f;
             }
             break;
 
         case TYPE_STRING:
             for (size_t i = 0; i < this->count; i++)
             {
-                v.block[i].data1.str = strdup(this->block[i].data1.str);
-                v.block[i].data2.i = this->block[i].data2.i;
+                v->block[i].data1.str = strdup(this->block[i].data1.str);
+                v->block[i].data2.i = this->block[i].data2.i;
             }
             break;
 
         case TYPE_STRUCT:
-            std::cerr << "Type struct is not allowed at duplicating " << this->name << std::endl;
+            std::cerr << "Type struct is not allowed at array duplicating " << this->name << std::endl;
             exit(-1);
         default:
             break;
         }
 
+    }else if (this->type == TYPE_STRUCT)
+    {
+        v = new var(this->type);
+        if (name)
+        {
+            v->name = strdup(name);
+        }
+        v->struct_count = this->struct_count;
+        v->struct_data = (var*)calloc(v->struct_count, sizeof(var));
+        var* child = v->struct_data;
+        var* source = this->struct_data;
+        int64_t limit = this->struct_count;
+        for (size_t i = 0; i < limit; i++)
+        {
+            if (this->struct_data[i].type == TYPE_STRUCT)
+            {
+                child[i] = *source[i].dup(source[i].name);
+                continue;
+            }else
+            {
+                child[i] = {0};
+                //child[i].name = strdup(this->struct_data[i].name);
+                child[i] = var(source[i].name, source[i].type);
+                child[i].write(source[i]);
+            }
+        }
+        
     }else
     {
-        v = var(this->name, this->type);
+        v = new var(this->type);
+        if (name)
+        {
+            v->name = strdup(name);
+        }
     
         switch (this->type)
         {
         case TYPE_INT:
-            v.data1.i = this->data1.i;
+            v->int_data = this->data1.i;
             break;
         
         case TYPE_STRING:
-            v.data1.str = strdup(this->data1.str);
-            v.length = this->length;
+            v->string_data = strdup(this->string_data);
+            v->string_length = this->string_length;
             break;
 
         case TYPE_FLOAT:
-            v.data1.f = this->data1.f;
+            v->float_data = this->float_data;
             break;
 
         default:
@@ -146,8 +208,19 @@ var var::dup()
     return v;
 }
 
+static char* strndup(char* str, uint64_t len)
+{
+    std::cout << "top " << len << str;
+    char* data = (char*)malloc(len+1);
+    
+    data = (char*)memcpy(data, str, len);
+    data[len] = 0;printf(" ptr(%i) = %p and %s", len, data, data);
+    return data;
+}
+
 char* get_datatype(int type)
 {
+    
     switch (type)
     {
     case TYPE_UNKNOWN :
@@ -158,8 +231,8 @@ char* get_datatype(int type)
         return strdup("Structure");
     case TYPE_BOOL :
         return strdup("Boolean");
-    case TYPE_INT :
-        return strdup("Integral");
+    case TYPE_INT :std::cout << "im here " << strndup("Integral", 9);
+        return strndup("Integral", 9);
     case TYPE_FLOAT :
         return strdup("Float");
     case TYPE_STRING :
@@ -224,24 +297,24 @@ int var::write(variant data)
     switch (this->type)
     {
     case TYPE_STRING:
-        if (this->length != 0)
+        if (this->string_length != 0)
         {
-            free(this->data2.str);
+            free(this->string_data);
         }
-        this->data2.str = strdup(data.str);
-        this->length = strlen(data.str) + 1;
+        this->string_data = strdup(data.str);
+        this->string_length = strlen(data.str) + 1;
         break;
     
     case TYPE_INT:
-        this->data1.i = data.i;
+        this->int_data = data.i;
         break;
 
     case TYPE_FLOAT:
-        this->data1.f = data.f;
+        this->float_data = data.f;
         break;
 
     case TYPE_REFERENCE:
-        this->data1.ptr = data.ptr;
+        //this->data1.ptr = data.ptr;
         break;
 
     case TYPE_BOOL:
@@ -249,7 +322,7 @@ int var::write(variant data)
         break;
 
     default:
-        std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
+        std::cerr << this->name << " has unknown data type (" << get_datatype(this->type) << ")" << std::endl;
         exit(-1);
     }
     
@@ -277,20 +350,20 @@ int var::write(var& v)
     switch (this->type)
     {
     case TYPE_STRING:
-        if (this->length != 0)
+        if (this->string_length != 0)
         {
-            free(this->data2.str);
+            free(this->string_data);
         }
-        this->data2.str = strdup(v.data2.str);
-        this->length = v.length;
+        this->string_data = strdup(v.string_data);
+        this->string_length = v.string_length;
         break;
     
     case TYPE_INT:
-        this->data1.i = v.data1.i;
+        this->int_data = v.int_data;
         break;
 
     case TYPE_FLOAT:
-        this->data1.f = v.data1.f;
+        this->float_data = v.float_data;
         break;
 
     case TYPE_REFERENCE:
@@ -336,7 +409,7 @@ variant var::read()
     return this->data1;
 }
 
-int var::print()
+void var::print()
 {
     if ( this->type == TYPE_BUFFER )
     {
@@ -360,6 +433,7 @@ int var::print()
         case TYPE_INT:
             for (i = 0; i < this->count - 1; i++)
             {
+                //printf("%")
                 std::cout << this->block[i].data1.i << ", ";
             }
             std::cout << this->block[i].data1.i;
@@ -378,18 +452,18 @@ int var::print()
             {
                 if (this->block[i].data1.b)
                 {
-                    std::cout << "True, ";
+                    std::cout << "true, ";
                 }else
                 {
-                    std::cout << "False, ";
+                    std::cout << "false, ";
                 }
             }
             if (this->block[i].data1.b)
             {
-                std::cout << "True";
+                std::cout << "true";
             }else
             {
-                std::cout << "False";
+                std::cout << "false";
             }
             break;
         
@@ -407,7 +481,18 @@ int var::print()
         std::cout << " ]" << std::endl;
     }else if (this->type == TYPE_STRUCT)
     {
-        std::cout << "not yet coded :p"; exit(9);
+        //std::cout << "not yet coded :p"; exit(9);
+        int64_t limit = this->struct_count-1;
+        int64_t i;
+        std::cout << "{ ";
+        for (i = 0; i < limit; i++)
+        {
+            this->struct_data[i].print();
+            std::cout << ", ";
+        }
+        this->struct_data[i].print();
+        std::cout << " }";
+        
     }else
     {
         switch (this->type)
@@ -423,10 +508,10 @@ int var::print()
         case TYPE_BOOL:
             if (this->data1.b)
             {
-                std::cout << "True";
+                std::cout << "true";
             }else
             {
-                std::cout << "False";
+                std::cout << "false";
             }
             break;
 
@@ -443,10 +528,10 @@ int var::print()
         default:
             break;
         }
-        std::cout << std::endl;
+        return;
     }
     
-    
+    std::cout << std::endl;
     
 
 }

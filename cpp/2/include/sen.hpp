@@ -113,9 +113,11 @@ bool sen_comp(char* str, char* prod)
 
 char* strndup(char* str, uint64_t len)
 {
+    std::cout << "top ";
     char* data = (char*)malloc(len+1);
-    memcpy(data, str, len);
-    data[len] = 0;
+    
+    data = (char*)memcpy(data, str, len);
+    data[len] = 0;printf(" ptr(%i) = %p and %s", len, data, data);
     return data;
 }
 

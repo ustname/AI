@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include <string.h>
 #include <fstream>
 #include <vector>
@@ -44,8 +45,8 @@ struct block
 enum DATATYPE
 {
     TYPE_UNKNOWN = 0,
-    TYPE_ARRAY = 1,
-    TYPE_REFERENCE = 2,
+    TYPE_REFERENCE = 1,
+    TYPE_ARRAY = 2,
     TYPE_STRUCT = 4,
     TYPE_BOOL = 8,
     TYPE_INT = 12,

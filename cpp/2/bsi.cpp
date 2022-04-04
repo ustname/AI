@@ -52,7 +52,7 @@ public:
         switch (info1)
         {
         case UNIT_NAME:
-            this->info2.str = strdup(info2.str); //printf("(%p)", this->info2.str);
+            this->info2.str = info2.str; //printf("(%p)", this->info2.str);
             break;
         
         default:
@@ -66,42 +66,45 @@ public:
 
     void dump()
     {
+        char* temp_value_type;
         switch (this->info1)
         {
-        case UNIT_NAME:
+            case UNIT_NAME:
             std::cout << "Name: " << this->info2.str << std::endl;
             //printf("{%p}\n", this->info2.str);
             //std::cout << "Name: " << this->info2.str << std::endl;
             break;
 
-        case UNIT_OPERATOR:
+            case UNIT_OPERATOR:
             std::cout << "Operator: ";
             switch (this->info2.i)
             {
-            case OP_ISEQUAL:
-                std::cout << "==" << std::endl;
+                case OP_ISEQUAL:
+                std::cout << "==";
                 break;
 
-            case OP_ISNOTEQUAL:
-                std::cout << "!=" << std::endl;
+                case OP_ISNOTEQUAL:
+                std::cout << "!=";
                 break;
 
-            case OP_ISMOREEQUAL:
-                std::cout << ">=" << std::endl;
+                case OP_ISMOREEQUAL:
+                std::cout << ">=";
                 break;
 
-            case OP_ISLESSEQUAL:
-                std::cout << "<=" << std::endl;
+                case OP_ISLESSEQUAL:
+                std::cout << "<=";
                 break;
             
-            default:
-                std::cout << (char)this->info2.i << std::endl;
+                default:
+                std::cout << (char)this->info2.i;
                 break;
             }
+            //std::cout  << " nowrong";
             break;
 
-        case UNIT_VALUE:
-            std::cout << "Value: " << get_datatype(this->info2.i) << " = ";
+            case UNIT_VALUE:
+            std::cout << "Value: " ;
+            
             switch (this->info2.i)
             {
             case TYPE_INT:
@@ -129,23 +132,16 @@ public:
             default:
                 break;
             }
-
-        std::cout << std::endl;
             break;
-        case 0:
-            std::cout << "Empty" << std::endl;
+            case 0:
+            std::cout << "Empty";
             return;
 
-        default:
-            std::cout << "Invalid code " << (int64_t)this->info1 << std::endl;
+            default:
+            std::cout << "Invalid code " << (int64_t)this->info1;
             break;
         }
-        //this->clear();
-        //this->info1 = 0;
-        //if (this->info1 == UNIT_NAME)
-        //{
-        //    std::cout << "Name: " << this->info2.str << std::endl;
-        //}
+        std::cout << std::endl;
         return;
     }
 
@@ -204,7 +200,7 @@ public:
         default:
             break;
         }
-        //std::cout << "clear ";
+        std::cout << "clear ";
     };
     */
 };
@@ -219,6 +215,7 @@ void unit_print(std::vector<unit>& line)
         line[i].dump();
         
     }
+    //std::cout << "out";
 }
 
 void unit_clear(std::vector<unit>& line)
@@ -227,7 +224,7 @@ void unit_clear(std::vector<unit>& line)
 
     for (size_t i = 0; i < count; i++)
     {
-        //std::cout << i << line[i].info1;
+        std::cout << i << " " << (int64_t)line[i].info1;
         switch (line[i].info1)
         {
     
@@ -237,10 +234,11 @@ void unit_clear(std::vector<unit>& line)
         //std::cout << line[i].info2.str;
             if (line[i].info2.str)
             {
-                //printf(" :(%p)%s, ", line[i].info2.str, line[i].info2.str);
-                delete line[i].info2.str;
+                printf(" :(%p)%s, ", line[i].info2.str, line[i].info2.str);
+                //delete line[i].info2.str; std::cout << "freed";
                 line[i].info2.i = 0;
             }
+            line[i].info2.i = 0;
             //std::cout << "done";
             break;
 
@@ -262,11 +260,11 @@ void unit_clear(std::vector<unit>& line)
         default:
             break;
         }
-        //std::cout<< "nope";
+        std::cout<< " nope ";
         line[i].info1 = 0;
 
     }
-    
+    std::cout << "out";
 }
 
 /*  Unit structure
@@ -368,6 +366,7 @@ int declare(var& root, std::vector<unit>& line, var** right_value)
     return 0;
 }
 
+/*
 int read_value(char* str, var& stored)
 {
     if (*str == '\"') // string
@@ -398,6 +397,7 @@ int read_value(char* str, var& stored)
     
     return 0;
 }
+*/
 
 int read_operator(char* str, int& len)
 {
@@ -486,7 +486,101 @@ int read_operator(char* str, int& len)
     return 0;
 }
 
-double read_value_float(var& root, std::vector<unit>& line, int offset)
+bool read_value_bool(var& root, std::vector<unit>& line, int offset)
+{
+    bool result;
+    var value1 = var();
+    var value2 = var();
+    var* value_from_var;
+
+    if (line[offset].info1 == UNIT_NAME)
+    {
+        value_from_var = root.struct_find(line[offset].info2.str);
+        value1 = var(*value_from_var);
+
+    }
+    
+}
+
+char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t& ret_len)
+{
+    std::ostringstream value1;
+    char* value2;
+    int64_t value1_len;
+    int64_t value2_len;
+    var* value_from_var;
+
+    if (line[offset].info1 == UNIT_NAME)
+    {
+        //printf("{%p}", line[offset].info2.str);
+        //std::cout << line[offset].info2.str;
+        value_from_var = root.struct_find(line[offset].info2.str);
+        if (value_from_var->type == TYPE_STRING)
+        {
+            value1 << strdup(value_from_var->string_data);
+            //value1_len = value_from_var->string_length;
+        }
+    }else if (line[offset].info1 == UNIT_VALUE)
+    {
+        if (line[offset].info2.i == TYPE_STRING)
+        {
+            value1 << strdup(line[offset].info3.str);
+            //value1_len = strlen(line[offset].info3.str);
+        }//std::cout << "loop" << (int64_t)value1_len; exit(-1);
+    }
+
+    read_value_string_top:
+    ++offset;
+    if (offset == line.size())
+    {
+        goto read_value_string_final;
+    }
+
+    if (line[offset].info1 == UNIT_OPERATOR)
+    {
+        if (line[offset].info2.i == OP_PLUS)
+        {
+            ++offset;
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                value_from_var = root.struct_find(line[offset].info2.str);
+                if (value_from_var->type == TYPE_STRING)
+                {
+                    value1 << value_from_var->string_data;
+                    //value2_len = value_from_var->string_length;
+                }
+
+            }else if (line[offset].info1 == UNIT_VALUE)
+            {
+                if (line[offset].info2.i == TYPE_STRING)
+                {
+                    value1 << line[offset].info3.str;
+                    //value2_len = strlen(line[offset].info3.str);
+                }else if (line[offset].info2.i == TYPE_INT)
+                {
+                    value1 << line[offset].info3.i;
+                }else if (line[offset].info2.i == TYPE_FLOAT)
+                {
+                    value1 << line[offset].info3.f;
+                }
+                
+            }
+
+            //value1 = (char*)realloc(value1, value1_len + value2_len);
+            //strcpy(value1+value1_len, value2);
+            value1_len += value2_len;
+            goto read_value_string_top;
+        }
+        
+    }
+    
+
+    read_value_string_final:
+    ret_len = value1.str().length(); //std::cout << value1;
+    return strdup(value1.str().data());
+}
+
+double read_value_float(var& root, std::vector<unit>& line, int& offset)
 {
     double value1;
     double value2 = 0;
@@ -508,7 +602,6 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
         {
             value1 = value_from_var->data1.f;
         }
-        
         ++offset;
         if (offset == line.size())
         {
@@ -528,13 +621,27 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
         {
             goto read_value_float_final;////
         }
+    }else if (line[offset].info1 == UNIT_OPERATOR)
+    {
+        if (line[offset].info2.i == OP_BRACKET_LEFT)
+        {
+            ++offset;
+            value1 = read_value_float(root, line, offset);
+            ++offset;
+            line[offset].dump();
+        }
+        if (offset == line.size())
+        {
+            goto read_value_float_final;////
+        }
     }
     
-    
+    std::cout << value1;
     read_value_float_top:
-    ////line[offset].dump();
+    ////
+    line[offset].dump();
     if (line[offset].info1 == UNIT_OPERATOR)
-    {
+    { std::cout << offset <<" here ";
         /////////// INT PLUS
         if (line[offset].info2.i == OP_PLUS)
         {
@@ -564,6 +671,18 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                 }else if (line[offset].info2.i == TYPE_FLOAT)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {//std::cout << " herejnyby " << value2;
+                    ++offset;
+                    value2 = read_value_float(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
                 }
             }
             //std::cout << "jinuhbygvt";
@@ -700,6 +819,10 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                     }
                 }
                 goto read_value_float_plus;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                value1 += value2;
+                goto read_value_float_final;
             }
             
             
@@ -733,6 +856,18 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                 }else if (line[offset].info2.i == TYPE_FLOAT)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_float(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
                 }
             }
             
@@ -869,11 +1004,11 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                     }
                 }
                 goto read_value_float_minus;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                value1 -= value2;
+                goto read_value_float_final;
             }
-            
-            
-
-        
         }
         /////////// INT MUL
         else if (line[offset].info2.i == OP_MUL)
@@ -905,11 +1040,26 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
                 }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_float(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
+                }
             }
 
             value1 *= value2;
             ++offset;
             if (offset == line.size())
+            {
+                goto read_value_float_final;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
             {
                 goto read_value_float_final;
             }else
@@ -947,6 +1097,18 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
                 }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i = OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_float(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
+                }
             }
 
             value1 /= value2;
@@ -954,10 +1116,17 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
             if (offset == line.size())
             {
                 goto read_value_float_final;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                goto read_value_float_final;
             }else
             {
                 goto read_value_float_top;
             }
+        }else if (line[offset].info2.i = OP_BRACKET_RIGHT)
+        {
+            //std::cout << " of " << offset;
+            goto read_value_float_final;
         }else
         {
             line[offset].dump();
@@ -972,11 +1141,10 @@ double read_value_float(var& root, std::vector<unit>& line, int offset)
     return value1;
 }
 
-int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
+int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
 {
-    double value1;
+    double value1 = 0;
     double value2 = 0;
-    int op_before = 0;
     var* value_from_var;
 
     //value1 = line[offset].info1
@@ -990,6 +1158,9 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
         if (value_from_var->type == TYPE_INT)
         {
             value1 = value_from_var->data1.i;
+        }else if (value_from_var->type == TYPE_FLOAT)
+        {
+            value1 = value_from_var->data1.f;
         }
         ++offset;
         if (offset == line.size())
@@ -1010,7 +1181,20 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
         {
             goto read_value_int_final;////
         }
+    }else if (line[offset].info1 == UNIT_OPERATOR)
+    {
+        if (line[offset].info2.i == OP_BRACKET_LEFT)
+        {
+            ++offset;
+            value1 = read_value_int(root, line, offset);
+            ++offset;
+        }
+        if (offset == line.size())
+        {
+            goto read_value_int_final;////
+        }
     }
+    
     
     
     read_value_int_top:
@@ -1047,11 +1231,25 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
                 }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_int(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
+                }
             }
-            //std::cout << "jinuhbygvt";
+            
+            
+            //
 
             read_value_int_plus:
-            ++offset;
+            ++offset;//std::cout << "jinuhbygvt";
             if (offset == line.size())
             {
                 value1 += value2;
@@ -1182,7 +1380,12 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                     }
                 }
                 goto read_value_int_plus;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                value1 += value2;
+                goto read_value_int_final;
             }
+            
             
             
         }
@@ -1215,6 +1418,18 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                 }else if (line[offset].info2.i == TYPE_FLOAT)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
+                }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_int(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
                 }
             }
             
@@ -1351,11 +1566,11 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                     }
                 }
                 goto read_value_int_minus;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                value1 -= value2;
+                goto read_value_int_final;
             }
-            
-            
-
-        
         }
         /////////// INT MUL
         else if (line[offset].info2.i == OP_MUL)
@@ -1387,11 +1602,26 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                 {
                     value2 = line[offset].info3.f;//std::cout << line.size();
                 }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_int(root, line, offset);
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
+                }
             }
 
             value1 *= value2;
             ++offset;
             if (offset == line.size())
+            {
+                goto read_value_int_final;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
             {
                 goto read_value_int_final;
             }else
@@ -1427,7 +1657,19 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
                     value2 = line[offset].info3.i;
                 }else if (line[offset].info2.i == TYPE_FLOAT)
                 {
-                    value2 = line[offset].info3.f;//std::cout << line.size();
+                    value2 = line[offset].info3.f;//
+                }
+            }else if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_BRACKET_LEFT)
+                {
+                    ++offset;
+                    value2 = read_value_int(root, line, offset);//std::cout << "lokijuhygt";
+                    ++offset;
+                }else if (line[offset].info2.i != OP_BRACKET_RIGHT)
+                {
+                    std::cerr << "Expected closing bracket" << std::endl;
+                    exit(-1);
                 }
             }
 
@@ -1436,17 +1678,23 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int offset)
             if (offset == line.size())
             {
                 goto read_value_int_final;
+            }else if (line[offset].info2.i == OP_BRACKET_RIGHT)
+            {
+                goto read_value_int_final;
             }else
             {
                 goto read_value_int_top;
             }
+        }else if (line[offset].info2.i = OP_BRACKET_RIGHT)
+        {
+            //std::cout << "value 1 " << value1;
+            goto read_value_int_final;
         }else
         {
             line[offset].dump();
             std::cerr << " are not allowed" <<std::endl;
             exit(-1);
         }
-        
     }
     
     
@@ -1478,7 +1726,9 @@ int right_value(var& root, std::vector<unit>& line, int offset, var& stored)
         break;
 
     case TYPE_STRING:
-        stored.write( QQs(line[offset].info3.str) );
+        value1.str = read_value_string(root, line, offset, value2.i);
+        stored.write( value1 );
+        //stored.write( QQs(line[offset].info3.str) );
         break;
 
     case TYPE_BOOL:
@@ -1508,10 +1758,10 @@ int read_line(char* str, std::vector<unit>& line)
     str += last_add;//std::cout << "no eerororo";printf(" (%p) %i ", str, last_add);
     if (*str == '\0')
     {
-        //std::cout << "kjinuhbyvtfcrdx";
+        //std::cout << last;
         return 0;
     }
-    int last = stop_at(str, "\n")+1; 
+    int last = stop_at(str, "\n")+1;
     str = strndup(str, last);
     int read_line_name_counter = 0;
     char* read_line_name_first = 0;
@@ -1595,11 +1845,11 @@ int read_line(char* str, std::vector<unit>& line)
             continue;
         }
 
-        if (str[i] == '\0')
-        {
-            line.push_back(  unit(  UNIT_NAME, QQs( strndup(read_line_name_first, read_line_name_counter) ), QQi(0)  )  );
-            goto read_line_main;
-        }
+        //if (str[i] == '\0')
+        //{
+        //    line.push_back(  unit(  UNIT_NAME, QQs( strndup(read_line_name_first, read_line_name_counter) ), QQi(0)  )  );
+        //    break;
+        //}
         
         if (str[i] > 127)
         {
@@ -1607,29 +1857,35 @@ int read_line(char* str, std::vector<unit>& line)
             exit(-1);
         }
         
-        line.push_back(  unit(  UNIT_NAME, QQs( strndup(read_line_name_first, read_line_name_counter) ), QQi(0)  )  ); //printf("%i, %i", line.size(), line[0].info1); printf(" (%p)%s, ", line[line.size()-1].info2.str, line[line.size()-1].info2.str);
-        goto read_line_main;
+        line.push_back(  unit(  UNIT_NAME, QQs( strndup(read_line_name_first, read_line_name_counter) ), QQi(0)  )  ); //printf("%i, %i", line.size(), line[0].info1); 
+        printf("created (%p)%s, ", line[line.size()-1].info2.str, line[line.size()-1].info2.str);
+        break;
     }
-
+    goto read_line_main;
 
     read_line_value_string:
     read_line_value_string_counter = 0;
-    while (++i < last)
-    {
-        ++read_line_value_string_counter;
+    while (i < last)
+    {std::cout << "oiuyt " << (int64_t)str[i];
+        
         if (str[i] == '\"')
         {
             if (read_line_value_string_counter == 0)
             {
-                line.push_back(unit(UNIT_VALUE, QQi(TYPE_STRING), QQs( (char*)malloc(1) ) ));
+                line.push_back(unit(UNIT_VALUE, QQi(TYPE_STRING), 
+                QQs( (char*)memset( malloc(1), 0, 1) ) ) );
             }else
             {
-                line.push_back(unit(UNIT_VALUE, QQi(TYPE_STRING), QQs(strndup(&str[i] - read_line_value_string_counter, read_line_value_string_counter) ) ));
+                line.push_back(unit(UNIT_VALUE, QQi(TYPE_STRING), 
+                QQs( strndup(&str[i] - read_line_value_string_counter, read_line_value_string_counter) ) ));
             }
-            i += read_line_value_string_counter-1;
-            goto read_line_main;
+            i += 1;
+            break;
         }
+        ++read_line_value_string_counter;
+        ++i;
     }
+    goto read_line_main;
 
     read_line_value_number:
     read_line_value_number_last = (&str[i]);
@@ -1678,10 +1934,6 @@ int read_line(char* str, std::vector<unit>& line)
     //std::cout << "out off the loop";
     //std::cout << last + last_add;
     return last + last_add-1;
-
-    
-    
-
 }
 
 int bsi::read(var& root, char* str)
@@ -1699,9 +1951,11 @@ int bsi::read(var& root, char* str)
     //unit_print(line);exit(-1);
     int i = 0;
     while (last_line_ret = read_line(str+last_line_len, line))
-    {//std::cout << "counter = " << i++ << std::endl;
-        //exit(-1);
-        //unit_print(line);//if (line[3].info1 == UNIT_NAME)  printf(" from bsi::read {%p} %s\n", line[3].info2.str, line[3].info2.str);
+    {   
+        //exit(-1);std::cout << "counter = " << last_line_ret << std::endl;
+        unit_print(line);//if (line[3].info1 == UNIT_NAME)  printf(" from bsi::read {%p} %s\n", line[3].info2.str, line[3].info2.str);
+        //unit_print(line);
+        std::cout << "sus";
         int ret = declare(root, line, &left_value);
         if (ret == 1)
         {
@@ -1731,96 +1985,12 @@ int bsi::read(var& root, char* str)
         }
         
         //root.print();
-        //
-        unit_clear(line); 
-        line = std::vector<unit>();
-        //line.clear();
-        last_line_len += last_line_ret;//std::cout << "fine";
+        //unit_print(line);
+        unit_clear(line);
+        //line = std::vector<unit>();
+        line.clear();std::cout << "fine ";
+        last_line_len += last_line_ret; std::cout << last_line_len;
     }
-    //unit_clear(line);
-    //line.~vector();
-    //std::cout << "out";
-    
-    //root["num"]->print();
-
-    /*
-    str = skip_at(str, " ");
-    int data_type = is_declaration(str);
-
-    if (data_type == 0)
-    {
-        std::cout << "Undefined data type \"";
-        print_len(str, stop_at(str, " "));
-        std::cout << "\"\n";
-        exit(-1);
-    }
-
-    str += stop_at(str, " ") + 1;
-    
-    if (data_type < 0)
-    {
-        data_type = -data_type;
-    } else if (data_type <= 4)
-    {
-        char var_name[100];
-        int var_name_len = name_len(str);
-        strncpy(var_name, str, var_name_len);
-        var_name[var_name_len] = 0;
-        var* v;
-        switch (data_type)
-        {
-        case 1:
-            v = _main->struct_create(var_name, TYPE_INT);
-            break;
-
-        case 2:
-            v = _main->struct_create(var_name, TYPE_FLOAT);
-            break;
-
-        case 3:
-            v = _main->struct_create(var_name, TYPE_BOOL);
-            break;
-
-        case 4:
-            v = _main->struct_create(var_name, TYPE_STRING);
-            break;
-        
-        default:
-            std::cout << "Unknown data type chosen " << data_type << std::endl;
-            exit(-1);
-        }
-        
-        str = skip_at(str, " ");
-
-        if (str == 0);
-        {
-            return 0;
-        }
-        if(read_operator(str) == OP_ISEQUAL)
-        {
-            str = skip_at(str, " ");
-            var* temp;
-            int ret;
-            ret = name_len(str);
-            if (ret == 0)
-            {
-                temp = new var();
-                ret = read_value(str, *temp);
-            }else
-            {
-                char* var_name = strndup(str, ret);
-                temp = _main->struct_find(var_name);
-            }
-            
-            
-            
-        }
-        
-        
-        
-
-
-    }
-    */
+    std::cout << "program done" << line.size();
     return 0;
 }
