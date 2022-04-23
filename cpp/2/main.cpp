@@ -1,8 +1,8 @@
 
-#include "bsi.hpp"
+#include "include/bsi.hpp"
 
 
-static std::string read_file(char* filename)
+static std::string read_file(const char* filename)
 {
     std::ifstream file(filename);
     if (!file.is_open())
@@ -18,13 +18,13 @@ static std::string read_file(char* filename)
 
 int main()
 {
-    char* s = "int num = 1000 + (9 / 5) * 8"; //printf("top(%p) ", s);
+    //char* s = "int num = 1000 + (9 / 5) * 8"; //printf("top(%p) ", s);
     var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);
-    //parent.struct_create("x", TYPE_INT)->write(QQi(9));
+    parent.struct_create("x", TYPE_INT | TYPE_ARRAY, 10)->arr_write(0, QQi(9));
     //parent.struct_create("y", TYPE_FLOAT)->write(QQf(9.987));
-    std::string str = read_file("program.txt"); 
-    bsi::read(parent, str.data());printf(" [%p] ", parent);
-    //parent.str_write(9, QQi(9));
+    std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt"); 
+    bsi::read(parent, (char*)str.data());
+    //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
     parent.print();
     //var* child = parent.dup("child");
     //child->print();

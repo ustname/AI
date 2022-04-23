@@ -37,14 +37,14 @@ union variant
 
 struct block
 {
-    variant data1;
-    variant data2;
+    int64_t length;
+    char* data;
 };
 
 
 enum DATATYPE
 {
-    TYPE_UNKNOWN = 0,
+    TYPE_UNDEFINED = 0,
     TYPE_REFERENCE = 1,
     TYPE_ARRAY = 2,
     TYPE_STRUCT = 4,

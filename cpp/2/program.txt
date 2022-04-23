@@ -1,3 +1,9 @@
-int num = 10
+int num = 1000
 
-int six = (num + 3) * (3 + 84)
+float six = 9 - (90 - (8))
+six = six * 98.3 - 0.99787
+
+print six
+print num
+
+print (six + 8)
