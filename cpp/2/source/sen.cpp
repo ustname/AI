@@ -56,7 +56,7 @@ char* skip_at(char* str, const char* token)
     skip_at_loop:
         ++i;
     }
-    return 0;
+    return str;
 }
 
 uint64_t name_len(char* str)

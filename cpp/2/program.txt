@@ -1,9 +1,5 @@
-int num = 1000
-
+int num = 3
 float six = 9 - (90 - (8))
-six = six * 98.3 - 0.99787
-
-print six
-print num
-
-print (six + 8)
+int y = -90
+six = 4 + 90
+x[num] = six

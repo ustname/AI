@@ -2,6 +2,12 @@
 #include "include/bsi.hpp"
 
 
+std::ostream& operator<<(std::ostream& stream, void* data)
+{
+    printf("%p", data);
+    return stream;
+}
+
 static std::string read_file(const char* filename)
 {
     std::ifstream file(filename);
@@ -22,7 +28,9 @@ int main()
     var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);
     parent.struct_create("x", TYPE_INT | TYPE_ARRAY, 10)->arr_write(0, QQi(9));
     //parent.struct_create("y", TYPE_FLOAT)->write(QQf(9.987));
-    std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt"); 
+    std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt");
+    //std::cout << (int)str[str.length()];exit(-1);
+    //std::cout << "Start file {" << (void*)str.data() << "} " << str.length() << std::endl;
     bsi::read(parent, (char*)str.data());
     //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
     parent.print();

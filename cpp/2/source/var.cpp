@@ -1,5 +1,7 @@
 #include "../include/var.hpp"
 
+
+
 bool legal_type(int type)
 {
     if (type > (TYPE_BUFFER | TYPE_ARRAY | TYPE_REFERENCE))
@@ -166,7 +168,7 @@ void var::clear()
     
     if (this->type & TYPE_ARRAY)
     {
-        delete this->arr_data;
+        free(this->arr_data);
     } else if (this->type == TYPE_STRUCT)
     {
         //delete this->data2.str;
@@ -474,6 +476,138 @@ variant var::read()
     return this->data1;
 }
 
+void print_var(var* o, int offset)
+{
+    if ( o->type == TYPE_BUFFER )
+    {
+        std::cerr << "Cant printing buffer";
+    }
+    
+    std::string space;
+    for (size_t i = 0; i < offset; i++)
+    {
+        space.append("\t");
+    }
+
+    std::cout << space;
+    if (o->name == nullptr)
+    {
+        std::cout << "(NULL) = ";
+    }else
+    {
+        std::cout << o->name << " = ";
+    }
+
+
+    if (o->type & TYPE_ARRAY)
+    {
+        std::cout << "[ ";
+        size_t i = 0;
+        switch (o->type ^ TYPE_ARRAY)
+        {
+        case TYPE_INT:
+            for (i = 0; i < o->count - 1; i++)
+            {
+                //printf("%")
+                std::cout << o->arr_int[i] << ", ";
+            }
+            std::cout << o->arr_int[i];
+            break;
+        
+        case TYPE_FLOAT:
+            for (i = 0; i < o->count - 1; i++)
+            {
+                std::cout << o->arr_float[i] << ", ";
+            }
+            std::cout << o->arr_float[i];
+            break;
+
+        case TYPE_BOOL:
+            for (i = 0; i < o->count - 1; i++)
+            {
+                if (o->arr_bool[i])
+                {
+                    std::cout << "true, ";
+                }else
+                {
+                    std::cout << "false, ";
+                }
+            }
+            if (o->arr_bool[i])
+            {
+                std::cout << "true";
+            }else
+            {
+                std::cout << "false";
+            }
+            break;
+        
+        case TYPE_STRING:
+            for (i = 0; i < o->count - 1; i++)
+            {
+                std::cout << "\"" << o->arr_string[i].data << "\", ";
+            }
+            std::cout << "\"" << o->arr_string[i].data << "\"";
+            break;
+
+        default:
+            break;
+        }
+        std::cout << " ]";
+    }else if (o->type == TYPE_STRUCT)
+    {
+        //std::cout << "not yet coded :p"; exit(9);
+        int64_t limit = o->struct_count-1;
+        int64_t i;
+        std::cout << "{" << std::endl;
+        for (i = 0; i < limit; i++)
+        {
+            o->struct_data[i].print();
+            std::cout << ", " <<std::endl;
+        }
+        o->struct_data[i].print();
+        std::cout << std::endl << "}";
+        
+    }else
+    {
+        
+        switch (o->type)
+        {
+        case TYPE_INT:
+            std::cout << o->int_data;
+            break;
+
+        case TYPE_FLOAT:
+            std::cout << o->float_data;
+            break;
+
+        case TYPE_BOOL:
+            if (o->bool_data)
+            {
+                std::cout << "true";
+            }else
+            {
+                std::cout << "false";
+            }
+            break;
+
+        case TYPE_STRING:
+            if (o->string_length)
+            {
+                std::cout << o->string_data;
+            }else
+            {
+                std::cout << "(NULL)";
+            }
+            break;
+        
+        default:
+            break;
+        }
+        return;
+    }
+}
+
 void var::print()
 {
     if ( this->type == TYPE_BUFFER )
@@ -552,10 +686,10 @@ void var::print()
         std::cout << "{" << std::endl;
         for (i = 0; i < limit; i++)
         {
-            this->struct_data[i].print();
+            print_var(&this->struct_data[i], 1);
             std::cout << ", " <<std::endl;
         }
-        this->struct_data[i].print();
+        print_var(&this->struct_data[i], 1);
         std::cout << std::endl << "}";
         
     }else
@@ -719,6 +853,54 @@ int var::arr_write(int index, variant data)
     
     return 0;
 }
+
+int var::arr_write(int index, var& data)
+{
+    if (!(this->type & TYPE_ARRAY))
+    {
+        std::cerr << this->name << " is not an array but " << get_datatype(this->type) << std::endl;
+        exit(-1);
+    }
+
+    if ((this->type ^ TYPE_ARRAY) != data.type)
+    {
+        std::cerr << "Expected " << get_datatype(this->type) << " but given " << get_datatype(this->type) << std::endl;
+        exit(-1);
+    }
+
+    if (this->count-1 < index)
+    {
+        std::cerr << this->name << " got an overflow with the size of " << this->count << " to index " << index << std::endl;
+        exit(-1);
+    }
+    
+    switch (this->type ^ TYPE_ARRAY)
+    {
+    case TYPE_BOOL:
+        this->arr_bool[index] = data.bool_data;
+        break;
+
+    case TYPE_INT: //printf("ptr = %p", this->block[0].data1);
+        this->arr_int[index] = data.int_data;
+        break;
+
+    case TYPE_FLOAT:
+        this->arr_float[index] = data.float_data;
+        break;
+    
+    case TYPE_STRING: //std::cout << index;
+        this->arr_string[index].length = data.string_length;
+        this->arr_string[index].data = _strdup(data.string_data);
+        break;
+        
+    default:
+        break;
+    }
+    
+    
+    return 0;
+}
+
 // dont use this
 /*
 int64_t var::arr_find(variant data)
