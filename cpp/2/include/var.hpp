@@ -52,6 +52,8 @@ public:
     int write(var& data);
     variant read();
     variant read(int64_t index);
+    int compare(var& data);
+    int compare(var* data);
     void print();
     int save(const char* filename);
     // Array
@@ -64,8 +66,7 @@ public:
     int struct_write(const char* member, variant data);
     int struct_write(const char* member, const var& data);
     int struct_write(const char* member, var* data);
-    int struct_write(const char* member, variant data, int64_t index);
-    int struct_write(const char* member, variant data1, variant data2);
+    int struct_write(const char* member, int64_t index, variant data);
     var* struct_create(const char* member, uint8_t type);
     var* struct_create(const char* member, uint8_t type, int64_t count);
     var* struct_find(const char* member);

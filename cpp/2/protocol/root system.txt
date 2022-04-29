@@ -1,0 +1,17 @@
+root = {
+
+}
+
+base = {
+    enum = {
+        
+    },
+    class = {
+
+    },
+    function = {
+
+    },
+    ${GLOBAL_VARIABLE}...,
+    function main
+}

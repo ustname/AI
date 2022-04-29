@@ -70,7 +70,7 @@ public:
         switch (this->info1)
         {
             case UNIT_NAME:
-            std::cout << "Name: " << this->info2.str << std::endl;
+            std::cout << "Name: " << this->info2.str;
             //printf("{%p}\n", this->info2.str);
             //std::cout << "Name: " << this->info2.str << std::endl;
             break;
@@ -287,9 +287,11 @@ enum OPERATOR_TYPE{
 
 bool islegal_name(char* str)
 {
-    const char* formal_name[] = {"int", "float", "string", "bool", "struct"};
+    const char* formal_name[] = {"int", "float", "string", "bool", "struct", "fucntion",
+     "for", "while"};
 
-    for (size_t i = 0; i < 5; i++)
+    int64_t size = sizeof(formal_name)/sizeof(char*);
+    for (size_t i = 0; i < size; i++)
     {
         if (sen_comp(str, formal_name[i]))
         {
@@ -305,6 +307,10 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset);
 
 int64_t read_value_int(var& root, std::vector<unit>& line, int& offset);
 
+int right_value(var &root, std::vector<unit> &line, int &offset, var &stored);
+
+const char* keyword_list[] = {"print", "exit"};
+
 bool keyword(var& root, std::vector<unit>& line)
 {
     if (line[0].info1 != UNIT_NAME)
@@ -313,8 +319,9 @@ bool keyword(var& root, std::vector<unit>& line)
     }
     
     char* key = line[0].info2.str;
+    int is_const = 0;
 
-    if (sen_comp(key, "print"))
+    if (sen_comp(key, keyword_list[0])) //print
     {
         if (line.size() == 1)
         {
@@ -324,7 +331,7 @@ bool keyword(var& root, std::vector<unit>& line)
 
         if (line[1].info1 == UNIT_NAME)
         {
-            var* temp = root.struct_find(line[1].info2.str);
+            var* temp = bsi::search(line[1].info2.str, is_const);
             if (temp == nullptr)
             {
                 std::cerr << "Undefined " << line[1].info2.str << std::endl;
@@ -366,7 +373,7 @@ bool keyword(var& root, std::vector<unit>& line)
 
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    var* value_from_var = root.struct_find(line[offset].info2.str);
+                    var* value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -397,17 +404,10 @@ bool keyword(var& root, std::vector<unit>& line)
                         exit(-1);
                         break;
                     }
-
-                    
-                    
-
                 }else if (line[offset].info1 == UNIT_VALUE)
                 {
                     
-                }
-                
-                
-                
+                }                
             }
             
         }
@@ -417,7 +417,7 @@ bool keyword(var& root, std::vector<unit>& line)
         
         
         return true;
-    }else if (sen_comp(key, "exit"))
+    }else if (sen_comp(key, keyword_list[1])) //exit
     {
         exit(-1);
     }
@@ -432,11 +432,68 @@ int is_declaration(char* str)
     for (size_t i = 0; i < 4; i++)
     {
         if (sen_comp(str, declaration[i]))
-        {
-            return i+1;
+        {//std::cout << str << " " << declaration[i] << " " << i << std::endl;
+            return (i + 1);
         }
     }
     return 0;
+}
+
+bool check_syntax(var& root, std::vector<unit>& line, int& offset)
+{
+    int ret;
+    var* has_var;
+    int is_const = 0;
+
+    if (line[offset].info1 == UNIT_NAME)
+    {
+        ret = is_declaration(line[offset].info2.str);
+        ++offset;
+        if (ret)
+        {
+            if (line[offset].info1 == UNIT_NAME)
+            {
+                has_var = bsi::search(line[offset].info2.str, is_const);
+                if (has_var)
+                {
+                    std::cerr << "Redeclaration of " << has_var->name << std::endl;
+                    exit(-1);
+                }
+                
+                ++offset;
+                if (line.size() == offset)
+                {
+                    return true;
+                }
+            }
+            
+        }else if (has_var = bsi::search(line[offset].info2.str, is_const))
+        {
+            ++offset;
+            if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_EQUAL)
+                {
+                    ++offset;
+                    var temp = var(has_var->type);
+                    right_value(root, line, offset, temp);
+                    temp.clear();
+                }else
+                {
+                    std::cerr << "Nope";
+                    exit(-1);
+                }
+            }
+        }
+    }else
+    {
+        std::cerr << "Nope";
+        exit(-1);
+    }
+    
+    
+
+    return false;
 }
 
 int declare(var& root, std::vector<unit>& line)
@@ -447,19 +504,20 @@ int declare(var& root, std::vector<unit>& line)
         return 0;
     }
 
+    int is_const = 0;
     int offset = 0;
     int ret = 0;
     ret = is_declaration(line[0].info2.str);
     
     if (ret)
-    {//std::cout << "declarind";
+    {//std::cout << "ret = " << ret << " " << line[0].info2.str << std::endl;
         if (line[1].info1 != UNIT_NAME)
         {
             std::cerr << "Expected an identifier" << std::endl;
             exit(-1);
         }
 
-        var* pos = root.struct_find(line[1].info2.str);
+        var* pos = bsi::search(line[1].info2.str, is_const);
 //std::cout << "broke " << line[1].info2.str;
         if (pos != nullptr)
         {
@@ -633,12 +691,17 @@ bool read_value_bool(var& root, std::vector<unit>& line, int offset)
     var value1 = var();
     var value2 = var();
     var* value_from_var;
+    int is_const = 0;
 
     if (line[offset].info1 == UNIT_NAME)
     {
-        value_from_var = root.struct_find(line[offset].info2.str);
-        value1 = var(*value_from_var);
-
+        value_from_var = bsi::search(line[offset].info2.str, is_const);
+        if (value_from_var == nullptr)
+        {
+            std::cerr << "Undefined " << line[offset].info2.str << std::endl;
+            exit(-1);
+        }
+        
     }
     return true;
 }
@@ -650,12 +713,13 @@ char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t&
     int64_t value1_len;
     int64_t value2_len;
     var* value_from_var;
+    int is_const = 0;
 
     if (line[offset].info1 == UNIT_NAME)
     {
         //printf("{%p}", line[offset].info2.str);
         //std::cout << line[offset].info2.str;
-        value_from_var = root.struct_find(line[offset].info2.str);
+        value_from_var = bsi::search(line[offset].info2.str, is_const);
         if (value_from_var == nullptr)
         {
             std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -689,7 +753,7 @@ char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t&
             ++offset;
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var == nullptr)
                 {
                     std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -698,7 +762,21 @@ char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t&
                 if (value_from_var->type == TYPE_STRING)
                 {
                     value1 << value_from_var->string_data;
-                    //value2_len = value_from_var->string_length;
+                }else if (value_from_var->type == TYPE_INT)
+                {
+                    value1 << value_from_var->int_data;
+                }else if (value_from_var->type == TYPE_FLOAT)
+                {
+                    value1 << value_from_var->float_data;
+                }else if (value_from_var->type == TYPE_BOOL)
+                {
+                    if (value_from_var->bool_data == false)
+                    {
+                        value1 << "false";
+                    }else
+                    {
+                        value1 << "true";
+                    }
                 }
 
             }else if (line[offset].info1 == UNIT_VALUE)
@@ -713,6 +791,15 @@ char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t&
                 }else if (line[offset].info2.i == TYPE_FLOAT)
                 {
                     value1 << line[offset].info3.f;
+                }else if (line[offset].info2.i == TYPE_BOOL)
+                {
+                    if (line[offset].info3.b == false)
+                    {
+                        value1 << "false";
+                    }else
+                    {
+                        value1 << "true";
+                    }
                 }
                 
             }
@@ -746,7 +833,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
     double value2 = 0;
     int op_before = 0;
     var* value_from_var;
-
+    int is_const = 0;
     //value1 = line[offset].info1
 
     /// Opening
@@ -754,7 +841,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
     {
         //printf("{%p}", line[offset].info2.str);
         //std::cout << line[offset].info2.str;
-        value_from_var = root.struct_find(line[offset].info2.str);
+        value_from_var = bsi::search(line[offset].info2.str, is_const);
         if (value_from_var == nullptr)
         {
             std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -827,7 +914,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var == nullptr)
                 {
                     std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -897,7 +984,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -933,7 +1020,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -969,7 +1056,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1005,7 +1092,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1065,7 +1152,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var == nullptr)
                 {
                     std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1135,7 +1222,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1171,7 +1258,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1207,7 +1294,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1243,7 +1330,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var == nullptr)
                     {
                         std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1303,7 +1390,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var == nullptr)
                 {
                     std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1367,7 +1454,7 @@ double read_value_float(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var == nullptr)
                 {
                     std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1451,6 +1538,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
     int64_t value1 = 0;
     double value2 = 0;
     var* value_from_var;
+    int is_const = 0;
 
     //value1 = line[offset].info1
 
@@ -1459,7 +1547,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
     {
         //printf("{%p}", line[offset].info2.str);
         //std::cout << line[offset].info2.str;
-        value_from_var = root.struct_find(line[offset].info2.str);
+        value_from_var = bsi::search(line[offset].info2.str, is_const);
         if (value_from_var == nullptr)
         {
             std::cerr << "Undefined " << line[offset].info2.str << std::endl;
@@ -1525,7 +1613,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var->type == TYPE_INT)
                 {
                     value2 = value_from_var->data1.i;
@@ -1592,7 +1680,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 *= value_from_var->data1.i;
@@ -1623,7 +1711,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 /= value_from_var->data1.i;
@@ -1654,7 +1742,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 += value_from_var->data1.i;
@@ -1685,7 +1773,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 -= value_from_var->data1.i;
@@ -1727,7 +1815,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var->type == TYPE_INT)
                 {
                     value2 = value_from_var->data1.i;
@@ -1792,7 +1880,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 *= value_from_var->data1.i;
@@ -1823,7 +1911,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 /= value_from_var->data1.i;
@@ -1854,7 +1942,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 -= value_from_var->data1.i;
@@ -1885,7 +1973,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
                 /// READ value
                 if (line[offset].info1 == UNIT_NAME)
                 {
-                    value_from_var = root.struct_find(line[offset].info2.str);
+                    value_from_var = bsi::search(line[offset].info2.str, is_const);
                     if (value_from_var->type == TYPE_INT)
                     {
                         value2 += value_from_var->data1.i;
@@ -1927,7 +2015,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var->type == TYPE_INT)
                 {
                     value2 = value_from_var->data1.i;
@@ -1986,7 +2074,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
             /// READ value
             if (line[offset].info1 == UNIT_NAME)
             {
-                value_from_var = root.struct_find(line[offset].info2.str);
+                value_from_var = bsi::search(line[offset].info2.str, is_const);
                 if (value_from_var->type == TYPE_INT)
                 {
                     value2 = value_from_var->data1.i;
@@ -2058,7 +2146,7 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
     return value1;
 }
 
-int right_value(var& root, std::vector<unit>& line, int offset, var& stored)
+int right_value(var& root, std::vector<unit>& line, int& offset, var& stored)
 {
     int data_type;
     var* temp;
@@ -2069,29 +2157,28 @@ int right_value(var& root, std::vector<unit>& line, int offset, var& stored)
     data_type = stored.type;
     switch (data_type)
     {
-    case TYPE_INT: //printf(" right value {%p} %s\n", line[offset].info2.str, line[offset].info2.str);
+    case TYPE_INT:
         value1.i = read_value_int(root, line, offset);
-        //std::cout << "here int" << value1.i;
-        stored.write( value1 ); //printf("olkijuhygt %i", stored.read().i);
+        stored.write( value1 );
         break;
 
     case TYPE_FLOAT:
         value1.f = read_value_float(root, line, offset);
-        //std::cout << "here " << value1.f;
         stored.write( value1 );
         break;
 
     case TYPE_STRING:
         value1.str = read_value_string(root, line, offset, value2.i);
         stored.write( value1 );
-        //stored.write( QQs(line[offset].info3.str) );
         break;
 
     case TYPE_BOOL:
-        //stored.write( QQi( line[offset].info3.b ) );
+        value1.b = read_value_bool(root, line, offset);
+        stored.write( value1 );
         break;
     
     default:
+        std::cout << "not written";
         break;
     }
     //std::cout << data_type;
@@ -2108,17 +2195,18 @@ int read_line(char* str, std::vector<unit>& line)
     }
     
     line.clear();
-    //std::cout << (void*)str << std::endl;
     int i = 0;
+    bool end_of_file = false;
     int last_add = skip_at(str, " \n") - str; //std::cout << " getting " << last_add;
     //str += last_add;std::cout << " " << last_add << " ";printf(" (%p) %i ", str, last_add);
     //printf("{%p} with add (%i) {%i}", str, last_add, str[0]);
-    if (*str == '\0')
-    {
-        std::cout << last_add;
-        return 0;
-    }
     int last = stop_at(str, "\n")+1;
+    
+    if (str[last-1] == '\0')
+    {
+        end_of_file = true;
+    }
+    //std::cout << " num " << (int64_t) << std::endl;
     str = strndup(str, last); //printf("\n%s\n", str);
     int read_line_name_counter = 0;
     char* read_line_name_first = 0;
@@ -2218,7 +2306,7 @@ int read_line(char* str, std::vector<unit>& line)
             exit(-1);
         }
         valueof_2.str = strndup(read_line_name_first, read_line_name_counter);
-        valueof_3.i = 0;
+        valueof_3.i = 0; //printf("(%p", read_line_name_first); std::cout << ") ayo rading string = " << valueof_2.str << std::endl;
         line.push_back(  unit(  UNIT_NAME, valueof_2, valueof_3  )  ); //printf("%i, %i", line.size(), line[0].info1); 
         //printf("created (%p)%s, ", line[line.size()-1].info2.str, line[line.size()-1].info2.str);
         break;
@@ -2304,6 +2392,11 @@ int read_line(char* str, std::vector<unit>& line)
     delete str;
     //std::cout << "out off the loop";
     //std::cout << last + last_add-1;
+    if (end_of_file)
+    {
+       return 0;
+    }else
+
     return last + last_add;
 }
 
@@ -2312,6 +2405,7 @@ int bsi::read(var& root, char* str)
     std::vector<unit> line;
     var* left_value = new var();
     var temp = var();
+    bsi::bsi_root = &root;
 
     int last_line_len = 0;
     int last_line_ret = 0;
@@ -2332,6 +2426,7 @@ int bsi::read(var& root, char* str)
         //unit_print(line);std::cout << "sus";
         
         int ret;
+        int offset = 0;
         
         if (keyword(root, line))
         {
@@ -2339,19 +2434,19 @@ int bsi::read(var& root, char* str)
         }
         else if (ret = declare(root, line))
         {
-            if (1)
-            {
+            if (ret == 1)
+            {//std::cout << "jubyvf ";
                 left_value = root.struct_create(line[1].info2.str, TYPE_INT);
-            }else if (2)
+            }else if (ret == 2)
             {
                 left_value = root.struct_create(line[1].info2.str, TYPE_FLOAT);
-            }else if (3)
+            }else if (ret == 3)
             {
                 left_value = root.struct_create(line[1].info2.str, TYPE_STRING);
-            }else if (4)
+            }else if (ret == 4)
             {
                 left_value = root.struct_create(line[1].info2.str, TYPE_BOOL);
-            }else if (6)
+            }else if (ret == 6)
             {
                 
                 continue;
@@ -2360,14 +2455,15 @@ int bsi::read(var& root, char* str)
                 std::cout << "not written";
             }
             
-                
+            
             
             if (line[2].info1 == UNIT_OPERATOR)
             {
                 if (line[2].info2.i == OP_EQUAL)
                 {
+                    offset = 3;
                     temp.type = left_value->type; 
-                    ret = right_value(root, line, 3, temp);
+                    ret = right_value(root, line, offset, temp);
                     left_value->write(temp);
                 }
             }
@@ -2375,7 +2471,8 @@ int bsi::read(var& root, char* str)
             //    exit(-1);
         }else if (line[0].info1 == UNIT_NAME)
         {
-            left_value = root.struct_find(line[0].info2.str);
+            int is_const = 0;
+            left_value = bsi::search(line[0].info2.str, is_const);
             if (!left_value)
             {
                 std::cerr << "Undefined " << line[0].info2.str << std::endl;
@@ -2383,8 +2480,15 @@ int bsi::read(var& root, char* str)
             }
             if (line[1].info2.i == OP_EQUAL)
             {
+                if (is_const)
+                {
+                    std::cerr << left_value->name << " are not allowed to be asigned" << std::endl;
+                    exit(-1);
+                }
+
+                offset = 2;
                 temp.type = left_value->type;
-                ret = right_value(root, line, 2, temp); 
+                ret = right_value(root, line, offset, temp);
                 left_value->write(temp);
             }else if (line[1].info2.i == OP_SQUAREBRACKET_LEFT)
             {

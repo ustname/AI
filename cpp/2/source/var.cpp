@@ -122,6 +122,12 @@ var::var(const char* name, uint8_t type, int64_t arr_num)
     this->type = type | TYPE_ARRAY;
     this->count = arr_num;
 
+    if (this->count == 0)
+    {
+        this->arr_data = nullptr;
+        return;
+    }
+
     switch (type ^ TYPE_ARRAY)
     {
     case TYPE_STRING:
@@ -476,6 +482,25 @@ variant var::read()
     return this->data1;
 }
 
+int var::compare(var& data)
+{
+    if (this->type != data.type)
+    {
+        return -2;
+    }
+
+    switch (this->type)
+    {
+    case TYPE_INT:
+        
+        break;
+    
+    default:
+        break;
+    }
+    
+}
+
 void print_var(var* o, int offset)
 {
     if ( o->type == TYPE_BUFFER )
@@ -483,11 +508,12 @@ void print_var(var* o, int offset)
         std::cerr << "Cant printing buffer";
     }
     
-    std::string space;
+    std::string space;// std::cout << o->name << offset << std::endl;
     for (size_t i = 0; i < offset; i++)
     {
         space.append("\t");
     }
+    //space.append("\\");
 
     std::cout << space;
     if (o->name == nullptr)
@@ -502,6 +528,12 @@ void print_var(var* o, int offset)
     if (o->type & TYPE_ARRAY)
     {
         std::cout << "[ ";
+        if (o->count == 0)
+        {
+            std::cout << "]";
+            return;
+        }
+        
         size_t i = 0;
         switch (o->type ^ TYPE_ARRAY)
         {
@@ -559,14 +591,23 @@ void print_var(var* o, int offset)
         //std::cout << "not yet coded :p"; exit(9);
         int64_t limit = o->struct_count-1;
         int64_t i;
+
+        if (o->count == 0)
+        {
+            std::cout << "{ }";
+            return;
+        }else
+
         std::cout << "{" << std::endl;
+
         for (i = 0; i < limit; i++)
         {
-            o->struct_data[i].print();
+            //std::cout << space << "jnuhbygtvfcr";
+            print_var(&o->struct_data[i], offset+1);
             std::cout << ", " <<std::endl;
         }
-        o->struct_data[i].print();
-        std::cout << std::endl << "}";
+        print_var(&o->struct_data[i], offset+1);
+        std::cout << std::endl << space << "}";
         
     }else
     {
@@ -624,9 +665,16 @@ void var::print()
     }
     
     if (this->type & TYPE_ARRAY)
-    {
+    {std::cout << " size = " << this->count << std::endl;
         std::cout << "[ ";
         size_t i = 0;
+        
+        if (this->count == 0)
+        {
+            std::cout << "]";
+            return;
+        }
+
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
@@ -683,6 +731,13 @@ void var::print()
         //std::cout << "not yet coded :p"; exit(9);
         int64_t limit = this->struct_count-1;
         int64_t i;
+
+        if (this->count == 0)
+        {
+            std::cout << "{ }";
+            return;
+        }else
+        
         std::cout << "{" << std::endl;
         for (i = 0; i < limit; i++)
         {
@@ -1036,7 +1091,7 @@ int var::struct_write(const char* member, variant data)
 {
     if (!(this->type == TYPE_STRUCT))
     {
-        std::cerr << this->name << " is not an structure" << std::endl;
+        std::cerr << this->name << " is not a structure" << std::endl;
         exit(-1);
     }
 
@@ -1058,11 +1113,11 @@ int var::struct_write(const char* member, variant data)
     }
 }
 
-int var::struct_write(const char* member, variant data1, variant data2)
+int var::struct_write(const char* member, int64_t index, variant data)
 {
     if (!(this->type == TYPE_STRUCT))
     {
-        std::cerr << this->name << " is not an structure" << std::endl;
+        std::cerr << this->name << " is not a structure" << std::endl;
         exit(-1);
     }
 
@@ -1074,12 +1129,13 @@ int var::struct_write(const char* member, variant data1, variant data2)
         exit(-1);
     }
 
-    if (pos->type == TYPE_BUFFER)
+    if (!(pos->type & TYPE_ARRAY))
     {
-        return pos->buf_write(data1.ptr, data2.i, BUFFER_WRITE_APPEND);
+        std::cerr << "Writing " << pos->name << " but is not an array" << std::endl;
+        exit(-1);
     }else
     {
-        return pos->write(data1);
+        return pos->arr_write(index, data);
     }
 }
 

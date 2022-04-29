@@ -1,5 +1,9 @@
 int num = 3
 float six = 9 - (90 - (8))
 int y = -90
-six = 4 + 90
+six = 4 + 90.2
+bool cee = 0
+string name = "sus " + six + " " + cee
+true = false
+bool check = true
 x[num] = six

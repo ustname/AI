@@ -26,11 +26,17 @@ int main()
 {
     //char* s = "int num = 1000 + (9 / 5) * 8"; //printf("top(%p) ", s);
     var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);
-    parent.struct_create("x", TYPE_INT | TYPE_ARRAY, 10)->arr_write(0, QQi(9));
+    parent.struct_create("x", TYPE_INT | TYPE_ARRAY, 10);
+    parent.struct_write("x", 0, QQi(9));
+    parent.struct_create("amongus", TYPE_INT | TYPE_ARRAY, 0);
+    parent.struct_create("son", TYPE_STRUCT);
+    var* ENUM;
+    (ENUM = parent.struct_create("enum", TYPE_STRUCT))->struct_create("true", TYPE_BOOL)->write(QQi(1));
+    parent.struct_find("enum")->struct_create("false", TYPE_BOOL)->write(QQi(0));
     //parent.struct_create("y", TYPE_FLOAT)->write(QQf(9.987));
     std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt");
     //std::cout << (int)str[str.length()];exit(-1);
-    //std::cout << "Start file {" << (void*)str.data() << "} " << str.length() << std::endl;
+    //std::cout << str.data() << "} " << str.length() << std::endl;
     bsi::read(parent, (char*)str.data());
     //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
     parent.print();
