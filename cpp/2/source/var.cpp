@@ -52,7 +52,7 @@ var::var(uint8_t type, int64_t arr_num)
     
     this->name = nullptr;
     this->type = type | TYPE_ARRAY;
-    this->count = arr_num;
+    this->arr_count = arr_num;
 
     switch (type ^ TYPE_ARRAY)
     {
@@ -120,9 +120,9 @@ var::var(const char* name, uint8_t type, int64_t arr_num)
     
     this->name = _strdup(name);
     this->type = type | TYPE_ARRAY;
-    this->count = arr_num;
+    this->arr_count = arr_num;
 
-    if (this->count == 0)
+    if (this->arr_count == 0)
     {
         this->arr_data = nullptr;
         return;
@@ -195,7 +195,7 @@ var* var::dup(char* name)
     
     if (this->type & TYPE_ARRAY)
     {
-        v = new var(this->type, this->count);
+        v = new var(this->type, this->arr_count);
         if (name)
         {
             v->name = _strdup(name);
@@ -204,7 +204,7 @@ var* var::dup(char* name)
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 v->arr_int[i] = this->arr_int[i];
             }//std::cout << (int64_t)v->name[1];printf("%p, ", &v->block[i].data1.i);printf("end %p", v->name);
@@ -212,14 +212,14 @@ var* var::dup(char* name)
             break;
 
         case TYPE_FLOAT:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 v->arr_float[i] = this->arr_float[i];
             }
             break;
 
         case TYPE_STRING:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 v->arr_string[i].data = _strdup(this->arr_string[i].data);
                 v->arr_string[i].length = this->arr_string[i].length;
@@ -482,6 +482,7 @@ variant var::read()
     return this->data1;
 }
 
+// dont use this
 int var::compare(var& data)
 {
     if (this->type != data.type)
@@ -492,9 +493,49 @@ int var::compare(var& data)
     switch (this->type)
     {
     case TYPE_INT:
-        
+        if (this->int_data > data.int_data)
+        {
+            return 1;
+        }else if (this->int_data < data.int_data)
+        {
+            return -1;
+        }else
+        {
+            return 0;
+        }
         break;
-    
+
+    case TYPE_FLOAT:
+        if (this->float_data > data.float_data)
+        {
+            return 1;
+        }else if (this->float_data < data.float_data)
+        {
+            return -1;
+        }else
+        {
+            return 0;
+        }
+        break;
+
+    case TYPE_STRING:
+        if (this->string_length > data.string_length)
+        {
+            return 1;
+        }else if (this->string_length < data.string_length)
+        {
+            return -1;
+        }else
+        {
+            if (strcmp(this->string_data, data.string_data))
+            {
+                /* code */
+            }
+            
+            return 0;
+        }
+        break;
+
     default:
         break;
     }
@@ -528,7 +569,7 @@ void print_var(var* o, int offset)
     if (o->type & TYPE_ARRAY)
     {
         std::cout << "[ ";
-        if (o->count == 0)
+        if (o->arr_count == 0)
         {
             std::cout << "]";
             return;
@@ -538,7 +579,7 @@ void print_var(var* o, int offset)
         switch (o->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (i = 0; i < o->count - 1; i++)
+            for (i = 0; i < o->arr_count - 1; i++)
             {
                 //printf("%")
                 std::cout << o->arr_int[i] << ", ";
@@ -547,7 +588,7 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_FLOAT:
-            for (i = 0; i < o->count - 1; i++)
+            for (i = 0; i < o->arr_count - 1; i++)
             {
                 std::cout << o->arr_float[i] << ", ";
             }
@@ -555,7 +596,7 @@ void print_var(var* o, int offset)
             break;
 
         case TYPE_BOOL:
-            for (i = 0; i < o->count - 1; i++)
+            for (i = 0; i < o->arr_count - 1; i++)
             {
                 if (o->arr_bool[i])
                 {
@@ -575,7 +616,7 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_STRING:
-            for (i = 0; i < o->count - 1; i++)
+            for (i = 0; i < o->arr_count - 1; i++)
             {
                 std::cout << "\"" << o->arr_string[i].data << "\", ";
             }
@@ -592,7 +633,7 @@ void print_var(var* o, int offset)
         int64_t limit = o->struct_count-1;
         int64_t i;
 
-        if (o->count == 0)
+        if (o->arr_count == 0)
         {
             std::cout << "{ }";
             return;
@@ -635,7 +676,7 @@ void print_var(var* o, int offset)
         case TYPE_STRING:
             if (o->string_length)
             {
-                std::cout << o->string_data;
+                std::cout << "\""<< o->string_data << "\"";
             }else
             {
                 std::cout << "(NULL)";
@@ -665,11 +706,11 @@ void var::print()
     }
     
     if (this->type & TYPE_ARRAY)
-    {std::cout << " size = " << this->count << std::endl;
+    {std::cout << " size = " << this->arr_count << std::endl;
         std::cout << "[ ";
         size_t i = 0;
         
-        if (this->count == 0)
+        if (this->arr_count == 0)
         {
             std::cout << "]";
             return;
@@ -678,7 +719,7 @@ void var::print()
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (i = 0; i < this->count - 1; i++)
+            for (i = 0; i < this->arr_count - 1; i++)
             {
                 //printf("%")
                 std::cout << this->arr_int[i] << ", ";
@@ -687,7 +728,7 @@ void var::print()
             break;
         
         case TYPE_FLOAT:
-            for (i = 0; i < this->count - 1; i++)
+            for (i = 0; i < this->arr_count - 1; i++)
             {
                 std::cout << this->arr_float[i] << ", ";
             }
@@ -695,7 +736,7 @@ void var::print()
             break;
 
         case TYPE_BOOL:
-            for (i = 0; i < this->count - 1; i++)
+            for (i = 0; i < this->arr_count - 1; i++)
             {
                 if (this->arr_bool[i])
                 {
@@ -715,7 +756,7 @@ void var::print()
             break;
         
         case TYPE_STRING:
-            for (i = 0; i < this->count - 1; i++)
+            for (i = 0; i < this->arr_count - 1; i++)
             {
                 std::cout << "\"" << this->arr_string[i].data << "\", ";
             }
@@ -732,7 +773,7 @@ void var::print()
         int64_t limit = this->struct_count-1;
         int64_t i;
 
-        if (this->count == 0)
+        if (this->arr_count == 0)
         {
             std::cout << "{ }";
             return;
@@ -772,7 +813,7 @@ void var::print()
         case TYPE_STRING:
             if (this->string_length)
             {
-                std::cout << this->string_data;
+                std::cout << "\""<< this->string_data << "\"";
             }else
             {
                 std::cout << "(NULL)";
@@ -802,32 +843,32 @@ int var::save(const char* filename)
 
     if (this->type & TYPE_ARRAY)
     {
-        file.write((char*)&this->count, 8);
+        file.write((char*)&this->arr_count, 8);
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 file.write((char*)&this->arr_int[i], 8);
             }
             break;
         
         case TYPE_FLOAT:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 file.write((char*)&this->arr_float[i], 8);
             }
             break;
 
         case TYPE_BOOL:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 file.write((char*)&this->arr_bool[i], 1);
             }
             break;
 
         case TYPE_STRING:
-            for (size_t i = 0; i < this->count; i++)
+            for (size_t i = 0; i < this->arr_count; i++)
             {
                 file.write((char*)&this->arr_string[i].length, 8);
                 file.write(this->arr_string[i].data, this->arr_string[i].length + 1);
@@ -876,9 +917,9 @@ int var::arr_write(int index, variant data)
         exit(-1);
     }
 
-    if (this->count-1 < index)
+    if (this->arr_count-1 < index)
     {
-        std::cerr << this->name << " got an overflow with " << this->count << " to " << index << std::endl;
+        std::cerr << this->name << " got an overflow with " << this->arr_count << " to " << index << std::endl;
         exit(-1);
     }
     
@@ -923,9 +964,9 @@ int var::arr_write(int index, var& data)
         exit(-1);
     }
 
-    if (this->count-1 < index)
+    if (this->arr_count-1 < index)
     {
-        std::cerr << this->name << " got an overflow with the size of " << this->count << " to index " << index << std::endl;
+        std::cerr << this->name << " got an overflow with the size of " << this->arr_count << " to index " << index << std::endl;
         exit(-1);
     }
     
@@ -969,7 +1010,7 @@ int64_t var::arr_find(variant data)
     switch (this->type ^ TYPE_ARRAY)
     {
     case TYPE_INT:
-        for (size_t i = 0; i < this->count; i++)
+        for (size_t i = 0; i < this->arr_count; i++)
         {
             if (num[i] == data.i)
             {
@@ -979,7 +1020,7 @@ int64_t var::arr_find(variant data)
         break;
     
     case TYPE_STRING:
-        for (size_t i = 0; i < this->count; i++)
+        for (size_t i = 0; i < this->arr_count; i++)
         {
             if ( strcmp(data.str, arr_string[i].data2.str) == 0 )
             {
@@ -990,7 +1031,7 @@ int64_t var::arr_find(variant data)
 
     case TYPE_BOOL:
         bo = &this->_data.b;
-        for (size_t i = 0; i < this->count; i++)
+        for (size_t i = 0; i < this->arr_count; i++)
         {
             if (bo[i] == data.b)
             {
@@ -1015,9 +1056,9 @@ variant var::operator[](int64_t index)
         exit(-1);
     }
 
-    if (this->count-1 < index)
+    if (this->arr_count-1 < index)
     {
-        std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->count << std::endl;
+        std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_count << std::endl;
         exit(-1);
     }
     variant return_data;
@@ -1190,7 +1231,7 @@ var* var::struct_find(const char* member)
 //        pos = &( this->data1.var[count-1] );
 //    }
 //        
-//    this->count++;
+//    this->arr_count++;
 //    pos = new var(variable.name, variable.type);
 //    
 //    return pos;
@@ -1211,7 +1252,7 @@ var* var::struct_create(const char* member, uint8_t type)
     //}
 //printf("creating %s ", member);
 
-    if (this->count == 0)
+    if (this->arr_count == 0)
     {
         this->struct_data = (var*)malloc(sizeof(var));
         //printf("allloc pos = %p, ", pos); pos = this->struct_data;
@@ -1223,7 +1264,7 @@ var* var::struct_create(const char* member, uint8_t type)
     var& pos = this->struct_data[struct_count];
 
     this->struct_count++;
-    pos = var(member, type); //std::cout << "Created " << pos->name << this->count;
+    pos = var(member, type); //std::cout << "Created " << pos->name << this->arr_count;
     //pos->name = _strdup(member);
     //std::cout << pos->name;
     return &pos;
@@ -1244,7 +1285,7 @@ var* var::struct_create(const char* member, uint8_t type, int64_t count)
     //}
 //printf("creating %s ", member);
 
-    if (this->count == 0)
+    if (this->arr_count == 0)
     {
         this->struct_data = (var*)malloc(sizeof(var));
         //printf("allloc pos = %p, ", pos); pos = this->struct_data;
@@ -1256,7 +1297,7 @@ var* var::struct_create(const char* member, uint8_t type, int64_t count)
     var& pos = this->struct_data[struct_count];
 
     this->struct_count++;
-    pos = var(member, type, count); //std::cout << "Created " << pos->name << this->count;
+    pos = var(member, type, count); //std::cout << "Created " << pos->name << this->arr_count;
     //pos->name = _strdup(member);
     //std::cout << pos->name;
     return &pos;

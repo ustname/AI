@@ -19,7 +19,7 @@ public:
         variant _data;
         variant data1;
         int64_t length; 
-        int64_t count; 
+        int64_t arr_count; 
         int64_t string_length;
         int64_t int_data;
         double float_data;

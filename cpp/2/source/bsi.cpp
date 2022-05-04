@@ -701,9 +701,32 @@ bool read_value_bool(var& root, std::vector<unit>& line, int offset)
             std::cerr << "Undefined " << line[offset].info2.str << std::endl;
             exit(-1);
         }
-        
+
+        if (value_from_var->type == TYPE_BOOL)
+        {
+            result = value_from_var->bool_data;
+        }else
+        {
+            std::cout << "kiunbytvc";
+        }
+    }else if (line[offset].info1 == UNIT_VALUE)
+    {
+        if (line[offset].info2.i == TYPE_BOOL)
+        {
+            result = value_from_var->bool_data;
+        }else
+        {
+            std::cout << "kiunbytvc";
+        }
     }
-    return true;
+    ++offset;
+    if (offset == line.size())
+    {
+        goto read_value_bool_final;
+    }
+    
+    read_value_bool_final:
+    return result;
 }
 
 char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t& ret_len)

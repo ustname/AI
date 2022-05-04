@@ -1,0 +1,38 @@
+
+
+class var{
+    char* name
+    uint8 type
+    uint8 info1
+    uint16 info2
+    uint32 info3
+    variant data1
+    variant data2
+    variant data3
+}
+
+info2:
+    INFO_CONST
+    INFO_REFERENCED
+
+variant data1:
+    int64_t length; 
+    int64_t arr_count; 
+    int64_t string_length;
+    int64_t int_data;
+    double float_data;
+    bool bool_data;
+    int64_t struct_count;
+
+variant data2:
+    char* string_data;
+    char* struct_type;
+
+variant data3:
+    var* struct_data;
+    int64_t* arr_int;
+    double* arr_float;
+    bool* arr_bool;
+    struct block* arr_string;
+    var* arr_struct;
+    void* arr_data;
