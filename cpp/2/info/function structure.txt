@@ -1,0 +1,7 @@
+function{
+    var ret
+    int argc
+    struct argv
+    int ft
+    buffer data
+}

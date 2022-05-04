@@ -40,6 +40,7 @@ int main()
     bsi::read(parent, (char*)str.data());
     //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
     parent.print();
+    parent.save("amongus_file.bin");
     //var* child = parent.dup("child");
     //child->print();
     //["name"]parent.

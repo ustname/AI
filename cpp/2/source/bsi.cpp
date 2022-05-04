@@ -427,8 +427,8 @@ bool keyword(var& root, std::vector<unit>& line)
 
 int is_declaration(char* str)
 {
-    const char* declaration[6] = {"int", "float", "string", "bool", "struct", "fucntion"};
-
+    const char* declaration[] = {"int", "float", "string", "bool", "array", "struct", "fucntion"};
+    int64_t count = sizeof(declaration)/sizeof(char*);
     for (size_t i = 0; i < 4; i++)
     {
         if (sen_comp(str, declaration[i]))
@@ -509,42 +509,20 @@ int declare(var& root, std::vector<unit>& line)
     int ret = 0;
     ret = is_declaration(line[0].info2.str);
     
-    if (ret)
-    {//std::cout << "ret = " << ret << " " << line[0].info2.str << std::endl;
-        if (line[1].info1 != UNIT_NAME)
-        {
+    if (ret){
+        //std::cout << "ret = " << ret << " " << line[0].info2.str << std::endl;
+        if (line[1].info1 != UNIT_NAME){
             std::cerr << "Expected an identifier" << std::endl;
             exit(-1);
         }
 
         var* pos = bsi::search(line[1].info2.str, is_const);
-//std::cout << "broke " << line[1].info2.str;
-        if (pos != nullptr)
-        {
+        if (pos != nullptr){
             std::cerr << "Redeclaration of " << line[1].info2.str << std::endl;
             exit(-1);
         }
-
-        if (line[2].info1 == UNIT_OPERATOR)
-        {
-            if (line[2].info2.i == OP_SQUAREBRACKET_LEFT)
-            {
-                offset = 2;
-                int64_t array_size = read_value_int(root, line, offset);
-                if (array_size < 0)
-                {
-                    std::cerr << "Negative value arn't allowed";
-                    exit(-1);
-                }
-                return 6;
-            }
-            
-        }
-        
         return ret;
     }
-    
-    
     
     return 0;
 }
@@ -2169,6 +2147,37 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
     return value1;
 }
 
+var* left_value(var& root, std::vector<unit>& line, int& offset){
+    var* dest;
+    int is_const = 0;
+    if (!line[offset].info1 == UNIT_NAME){
+        return 0;
+    }
+
+    while (true){
+        dest = bsi::search(line[offset].info2.str, is_const);
+        if (dest == 0){
+            std::cerr << "Undefined " << line[offset].info2.str << std::endl;
+            exit(-1);
+        }
+        ++offset;
+        if (line[offset].info1 == UNIT_OPERATOR){
+            if (line[offset].info2.i == OP_DOT){
+                ++offset;
+                continue;
+            }else
+            {
+                break;
+            }
+        }else
+        {
+            std::cerr << "Error syntax" << std::endl;
+            exit(-1);
+        }
+    }
+    return dest;
+}
+
 int right_value(var& root, std::vector<unit>& line, int& offset, var& stored)
 {
     int data_type;
@@ -2201,7 +2210,7 @@ int right_value(var& root, std::vector<unit>& line, int& offset, var& stored)
         break;
     
     default:
-        std::cout << "not written";
+        std::cout << "not written for " << get_datatype(data_type);
         break;
     }
     //std::cout << data_type;
@@ -2423,6 +2432,90 @@ int read_line(char* str, std::vector<unit>& line)
     return last + last_add;
 }
 
+void run(var& root, std::vector<unit>& line, int& offset){
+
+    int ret = 0;
+    var* left_var;
+    var temp = var();
+    if (keyword(root, line))
+    {
+        
+    }
+    else if (ret = declare(root, line))
+    {
+        if (ret == 1)
+        {//std::cout << "jubyvf ";
+            left_var = root.struct_create(line[1].info2.str, TYPE_INT);
+        }else if (ret == 2)
+        {
+            left_var = root.struct_create(line[1].info2.str, TYPE_FLOAT);
+        }else if (ret == 3)
+        {
+            left_var = root.struct_create(line[1].info2.str, TYPE_STRING);
+        }else if (ret == 4)
+        {
+            left_var = root.struct_create(line[1].info2.str, TYPE_BOOL);
+        }else
+        {
+            std::cout << "not written";
+        }
+        
+        if (line[2].info1 == UNIT_OPERATOR)
+        {
+            if (line[2].info2.i == OP_EQUAL)
+            {
+                offset = 3;
+                temp.type = left_var->type; 
+                ret = right_value(root, line, offset, temp);
+                left_var->write(temp);
+                temp.clear();
+            }
+        }
+        //if(root.struct_count == 2)
+        //    exit(-1);
+    }else if (left_var = left_value(root, line, offset))
+    {
+        int is_const = 0;
+        left_var = bsi::search(line[0].info2.str, is_const);
+        if (!left_value)
+        {
+            std::cerr << "Undefined " << line[0].info2.str << std::endl;
+            exit(-1);
+        }
+        if (line[1].info2.i == OP_EQUAL)
+        {
+            if (is_const)
+            {
+                std::cerr << left_var->name << " are not allowed to be asigned" << std::endl;
+                exit(-1);
+            }
+            offset = 2;
+            temp.type = left_var->type;
+            ret = right_value(root, line, offset, temp);
+            left_var->write(temp);
+        }else if (line[1].info2.i == OP_SQUAREBRACKET_LEFT)
+        {
+            if (!(left_var->type & TYPE_ARRAY))
+            {
+                std::cerr << left_var->name << " are not an array" << std::endl;
+                exit(-1);
+            }
+            int offset = 2;
+            int64_t index = read_value_int(root, line, offset);
+            ++offset;
+            if (line[offset].info1 == UNIT_OPERATOR)
+            {
+                if (line[offset].info2.i == OP_EQUAL)
+                {//std::cout << "mkjnubgytvfcrdyebhcue";
+                    temp.type = (left_var->type ^ TYPE_ARRAY);
+                    ret = right_value(root, line, ++offset, temp);
+                    left_var->arr_write(index, temp);
+                }
+            }
+        }
+    }
+}
+
 int bsi::read(var& root, char* str)
 {
     std::vector<unit> line;
@@ -2451,91 +2544,8 @@ int bsi::read(var& root, char* str)
         int ret;
         int offset = 0;
         
-        if (keyword(root, line))
-        {
-            
-        }
-        else if (ret = declare(root, line))
-        {
-            if (ret == 1)
-            {//std::cout << "jubyvf ";
-                left_value = root.struct_create(line[1].info2.str, TYPE_INT);
-            }else if (ret == 2)
-            {
-                left_value = root.struct_create(line[1].info2.str, TYPE_FLOAT);
-            }else if (ret == 3)
-            {
-                left_value = root.struct_create(line[1].info2.str, TYPE_STRING);
-            }else if (ret == 4)
-            {
-                left_value = root.struct_create(line[1].info2.str, TYPE_BOOL);
-            }else if (ret == 6)
-            {
-                
-                continue;
-            }else
-            {
-                std::cout << "not written";
-            }
-            
-            
-            
-            if (line[2].info1 == UNIT_OPERATOR)
-            {
-                if (line[2].info2.i == OP_EQUAL)
-                {
-                    offset = 3;
-                    temp.type = left_value->type; 
-                    ret = right_value(root, line, offset, temp);
-                    left_value->write(temp);
-                }
-            }
-            //if(root.struct_count == 2)
-            //    exit(-1);
-        }else if (line[0].info1 == UNIT_NAME)
-        {
-            int is_const = 0;
-            left_value = bsi::search(line[0].info2.str, is_const);
-            if (!left_value)
-            {
-                std::cerr << "Undefined " << line[0].info2.str << std::endl;
-                exit(-1);
-            }
-            if (line[1].info2.i == OP_EQUAL)
-            {
-                if (is_const)
-                {
-                    std::cerr << left_value->name << " are not allowed to be asigned" << std::endl;
-                    exit(-1);
-                }
-
-                offset = 2;
-                temp.type = left_value->type;
-                ret = right_value(root, line, offset, temp);
-                left_value->write(temp);
-            }else if (line[1].info2.i == OP_SQUAREBRACKET_LEFT)
-            {
-                if (!(left_value->type & TYPE_ARRAY))
-                {
-                    std::cerr << left_value->name << " are not an array" << std::endl;
-                    exit(-1);
-                }
-
-                int offset = 2;
-                int64_t index = read_value_int(root, line, offset);
-                ++offset;
-                if (line[offset].info1 == UNIT_OPERATOR)
-                {
-                    if (line[offset].info2.i == OP_EQUAL)
-                    {//std::cout << "mkjnubgytvfcrdyebhcue";
-                        temp.type = (left_value->type ^ TYPE_ARRAY);
-                        ret = right_value(root, line, ++offset, temp);
-                        left_value->arr_write(index, temp);
-                    }
-                }
-            }
-        }
-        
+        run(root, line, offset);
+        offset = 0;
         //exit(-1);
         //root.print();
         //unit_print(line);
