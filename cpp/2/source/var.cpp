@@ -91,7 +91,7 @@ var::var(uint8_t type, int64_t arr_num)
 
 var::var(const char* name, uint8_t type)
 {
-    if (name != 0)
+    if (name != nullptr)
     {
         this->name = strndup(name, strlen(name));
     }else
@@ -166,9 +166,9 @@ var::var(const char* name, uint8_t type, int64_t arr_num)
 void var::clear()
 {
     char buffer[1000];
-    strcpy_s(buffer, this->name);
     if (this->name)
     {
+        strcpy_s(buffer, this->name);
         delete this->name;
     }
     

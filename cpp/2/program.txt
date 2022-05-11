@@ -1,8 +1,5 @@
 int num = 3
-float six = 9 - (90 - (8))
-int y = -90
-six = 4 + 90.2
-bool this_is_false = false
-string name = "sus " + six + " " + this_is_false
-bool this_is_true = true
-x[num] = six
+float yt = 9.4
+num = 8 + 9 + 0
+yt = 7.8776
+yt = yt * num + 78

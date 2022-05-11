@@ -219,34 +219,33 @@ void unit_print(std::vector<unit>& line)
 
 void unit_clear(std::vector<unit>& line)
 {
-    int64_t count = line.size();
-
-    for (size_t i = 0; i < count; i++)
+    int64_t count = line.size(); //std::cout << count;std::cout << c++ << " ";
+    int c = 0;
+    for (unit i : line)
     {
-        //std::cout << i << " " << (int64_t)line[i].info1;
-        switch (line[i].info1)
+        
+        switch (i.info1)
         {
-    
         case UNIT_NAME:
         
         //printf(" clear name (%p)", line[i].info2.str );
         //std::cout << line[i].info2.str;
-            if (line[i].info2.str)
+            if (i.info2.str)
             {
                 
-                delete line[i].info2.str;// std::cout << "freed";printf(" :(%p)%s, ", line[i].info2.str, line[i].info2.str);
-                line[i].info2.i = 0;
+                delete i.info2.str;// std::cout << "freed";printf(" :(%p)%s, ", line[i].info2.str, line[i].info2.str);
+                i.info2.i = 0;
             }
-            line[i].info2.i = 0;
+            i.info2.i = 0;
             //std::cout << "done";
             break;
 
         case UNIT_VALUE:
-            switch (line[i].info2.i)
+            switch (i.info2.i)
             {
             case TYPE_STRING:
-                delete line[i].info3.str;
-                line[i].info3.i = 0;
+                delete i.info3.str;
+                i.info3.i = 0;
                 break;
             
             default:
@@ -260,8 +259,7 @@ void unit_clear(std::vector<unit>& line)
             break;
         }
         //std::cout<< " nope ";
-        line[i].info1 = 0;
-
+        i.info1 = 0;
     }
     //std::cout << "out";
 }
@@ -668,7 +666,7 @@ bool read_value_bool(var& root, std::vector<unit>& line, int offset)
     bool result;
     var value1 = var();
     var value2 = var();
-    var* value_from_var;
+    var* value_from_var{};
     int is_const = 0;
 
     if (line[offset].info1 == UNIT_NAME)
@@ -2218,7 +2216,7 @@ int right_value(var& root, std::vector<unit>& line, int& offset, var& stored)
     return 1;
 }
 
-int read_line(char* str, std::vector<unit>& line)
+int read_line(char* str, std::vector<unit>& line, bool& _end_of_file)
 {
     //printf(" last = (%i) ", str[0]);
     if (*str == '\0')
@@ -2426,8 +2424,8 @@ int read_line(char* str, std::vector<unit>& line)
     //std::cout << last + last_add-1;
     if (end_of_file)
     {
-       return 0;
-    }else
+        _end_of_file = true;
+    }
 
     return last + last_add;
 }
@@ -2435,7 +2433,7 @@ int read_line(char* str, std::vector<unit>& line)
 void run(var& root, std::vector<unit>& line, int& offset){
 
     int ret = 0;
-    var* left_var;
+    var* left_var{};
     var temp = var();
     if (keyword(root, line))
     {
@@ -2444,7 +2442,7 @@ void run(var& root, std::vector<unit>& line, int& offset){
     else if (ret = declare(root, line))
     {
         if (ret == 1)
-        {//std::cout << "jubyvf ";
+        {
             left_var = root.struct_create(line[1].info2.str, TYPE_INT);
         }else if (ret == 2)
         {
@@ -2473,7 +2471,8 @@ void run(var& root, std::vector<unit>& line, int& offset){
         }
         //if(root.struct_count == 2)
         //    exit(-1);
-    }else if (left_var = left_value(root, line, offset))
+    }
+    else if (left_var = left_value(root, line, offset))
     {
         int is_const = 0;
         left_var = bsi::search(line[0].info2.str, is_const);
@@ -2522,6 +2521,7 @@ int bsi::read(var& root, char* str)
     var* left_value = new var();
     var temp = var();
     bsi::bsi_root = &root;
+    bool end_of_file = false;
 
     int last_line_len = 0;
     int last_line_ret = 0;
@@ -2533,27 +2533,33 @@ int bsi::read(var& root, char* str)
     int i = 0;
     char text[100];
     //std::cin.getline(text, 100);
-    while (last_line_ret = read_line(str+last_line_len, line))
+    while (last_line_ret = read_line(str+last_line_len, line, end_of_file))
     {
         last_line_len += last_line_ret;
         //std::cout << "safe";
         //exit(-1);std::cout << "counter = " << last_line_ret << std::endl;
         //unit_print(line);//if (line[3].info1 == UNIT_NAME)  printf(" from bsi::read {%p} %s\n", line[3].info2.str, line[3].info2.str);
-        //unit_print(line);std::cout << "sus";
+        //unit_print(line);std::cout << "sus";std::cout << "going run \n"; std::cout << "after run \n";
         
         int ret;
         int offset = 0;
         
+        
         run(root, line, offset);
         offset = 0;
         //exit(-1);
-        //root.print();
+        //root.print();std::cout << "jubyvf ";
         //unit_print(line);
         unit_clear(line);
         //line = std::vector<unit>();std::cout << "fine ";std::cout << last_line_len;
-        line.clear();
+        //line.clear();
         //std::cout << "safe";
         //std::cin.getline(text, 100);
+        if (end_of_file)
+        {
+            line.clear();
+            break;
+        }
     }
     //std::cout << "program done" << line.size();
     return 0;
