@@ -21,29 +21,27 @@ static std::string read_file(const char* filename)
     return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 
-
 int main()
 {
     variant v;
     v.i = 9;
     //char* s = "int num = 1000 + (9 / 5) * 8"; //printf("top(%p) ", s);
-    var parent("parent", TYPE_STRUCT); //printf(" [%p] ", parent);
-    parent.struct_create("x", TYPE_INT | TYPE_ARRAY, 10);
-    parent.struct_write("x", 0, v);
-    parent.struct_create("amongus", TYPE_INT | TYPE_ARRAY, 0);
-    parent.struct_create("son", TYPE_STRUCT);
+    var& parent = *bsi::init(); //printf(" [%p] ", parent);
     var* ENUM;
-    (ENUM = parent.struct_create("enum", TYPE_STRUCT))->struct_create("true", TYPE_BOOL)->write(v);
+    (ENUM = parent.struct_find("enum"))->struct_create("true", TYPE_BOOL)->write(v); v.b = 7;
     parent.struct_find("enum")->struct_create("false", TYPE_BOOL)->write(v);
+    var ret_int("Rect", TYPE_STRUCT); 
+    ret_int.struct_create("x", TYPE_INT)->write(v);
+    ret_int.struct_create("y", TYPE_INT)->write(v);
+    bsi::push_class(ret_int);
     //parent.struct_create("y", TYPE_FLOAT)->write(QQf(9.987));
     std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt");
     //std::cout << (int)str[str.length()];exit(-1);
     //std::cout << str.data() << "} " << str.length() << std::endl;
     bsi::read(parent, (char*)str.data());
     //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
-    parent.print();
-    parent.save("amongus_file.bin");
-    //var* child = parent.dup("child");
+    //parent.print();
+    //var* child = parent.dup("child");parent.save("amongus_file.bin");
     //child->print();
     //["name"]parent.
     int number = 0;

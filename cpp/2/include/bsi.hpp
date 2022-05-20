@@ -4,9 +4,19 @@
 
 namespace bsi
 {
+    enum FUNCTION_TYPE {
+        FUNCTION_UNDEFINED,
+        CPP_FUNCTION,
+        BSI_FUNCTION,
+        IBA_FUNCTION
+    };
+
     extern var* bsi_root;
+    var* init();
     int read(var& stack, char* str);
     var* search(char* member, int& src);
+    var* function(const char* name, var& member, char* str);
+    int push_class(var& new_class);
 }
 
 enum BSI_VAR_SOURCE{

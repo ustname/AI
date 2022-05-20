@@ -1,5 +1,10 @@
 int num = 3
+
 float yt = 9.4
-num = 8 + 9 + 0
-yt = 7.8776
-yt = yt * num + 78
+
+
+
+Rect new
+new.x = 78
+
+print new

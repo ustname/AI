@@ -1,7 +1,19 @@
-function{
-    var ret
-    int argc
-    struct argv
-    int ft
-    buffer data
+
+
+struct function = {
+	int ft
+	variant ret
+	int argc
+	struct argv
+	buffer data
 }
+
+function.ft = {
+	0 = 'UNDEFINED FUNCTION'
+	1 = 'CPP FUNCTION'	// function from a cpp code
+	2 = 'BSI FUNCTION'	// hold a string
+	3 = 'IBA FUNCTION'	// binary memory of isntruction
+}
+
+function from cpp code:
+	var fun(var:struct* arg);	// this return a variable to be assigned, not a pointer of variable

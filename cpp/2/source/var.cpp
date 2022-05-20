@@ -1,5 +1,5 @@
 #include "../include/var.hpp"
-
+#include <math.h>
 
 
 bool legal_type(int type)
@@ -42,43 +42,66 @@ var::var(uint8_t type)
     this->info1 = 0;
     this->info2 = 0;
     this->info3 = 0;
+
+    if (type & TYPE_ARRAY)
+    {
+        this->arr_size = 0;
+        this->arr_capacity = 0;
+        return;
+    }
+
+    switch (type)
+    {
+    case TYPE_BUFFER:
+        *(int64_t*)(this->buf_info) = 0;
+        break;
+
+    case TYPE_STRING:
+        this->string_data = (char*)malloc(1);
+        this->string_data[0] = '\0';
+        break;
+    
+    default:
+        this->data1.i = NULL;
+        break;
+    }
+
 }
 // no multi array
 var::var(uint8_t type, int64_t arr_num)
 {
-    this->info1 = 0;
-    this->info2 = 0;
-    this->info3 = 0;
-    
-    this->name = nullptr;
+    *this = var(type);
     this->type = type | TYPE_ARRAY;
-    this->arr_count = arr_num;
+    this->arr_size = arr_num;
+
+    int64_t temp_capacity = log(arr_num) / log(2);
+    this->arr_capacity = pow(2, temp_capacity + 1);
 
     switch (type ^ TYPE_ARRAY)
     {
     case TYPE_STRING:
-        this->arr_string = (struct block*)malloc(sizeof(struct block) * arr_num);
-        memset((void*)this->arr_string, 1, sizeof(struct block) * arr_num);
+        this->arr_string = (struct block*)malloc(   sizeof(struct block) * arr_capacity);
+        memset((void*)this->arr_string, 1,          sizeof(struct block) * arr_capacity);
         break;
     
     case TYPE_INT:
-        this->arr_int = (int64_t*)malloc(sizeof(int64_t) * arr_num);
-        memset((void*)this->arr_int, 1, sizeof(int64_t) * arr_num);
+        this->arr_int = (int64_t*)malloc(   sizeof(int64_t) * arr_capacity);
+        memset((void*)this->arr_int, 1,     sizeof(int64_t) * arr_capacity);
         break;
 
     case TYPE_FLOAT:
-        this->arr_float = (double*)malloc( sizeof(double) * arr_num);
-        memset((void*)this->arr_float, 1,   sizeof(double) * arr_num);
+        this->arr_float = (double*)malloc(  sizeof(double) * arr_capacity);
+        memset((void*)this->arr_float, 1,   sizeof(double) * arr_capacity);
         break;
 
     case TYPE_STRUCT:
-        this->arr_struct = (var*)malloc( sizeof(var) * arr_num);
-        memset((void*)this->arr_struct, 1, sizeof(var) * arr_num);
+        this->arr_struct = (var*)malloc(    sizeof(var) * arr_capacity);
+        memset((void*)this->arr_struct, 1,  sizeof(var) * arr_capacity);
         break;
 
     case TYPE_BOOL:
-        this->arr_bool = (bool *)malloc( sizeof(bool) * arr_num);
-        memset((void*)this->arr_bool, 1, sizeof(bool) * arr_num);
+        this->arr_bool = (bool *)malloc( sizeof(bool) * arr_capacity);
+        memset((void*)this->arr_bool, 1, sizeof(bool) * arr_capacity);
         break;
 
     default:
@@ -91,6 +114,7 @@ var::var(uint8_t type, int64_t arr_num)
 
 var::var(const char* name, uint8_t type)
 {
+    *this = var(type);
     if (name != nullptr)
     {
         this->name = strndup(name, strlen(name));
@@ -98,12 +122,6 @@ var::var(const char* name, uint8_t type)
     {
         this->name = _strdup("(NULL)");
     }
-    
-    this->type = type;
-    this->length = 0;
-    this->info1 = 0;
-    this->info2 = 0;
-    this->info3 = 0;
 }
 // no multi array
 var::var(const char* name, uint8_t type, int64_t arr_num)
@@ -114,75 +132,47 @@ var::var(const char* name, uint8_t type, int64_t arr_num)
         exit(-1);
     }
 
-    this->info1 = 0;
-    this->info2 = 0;
-    this->info3 = 0;
-    
+    *this = var(type, arr_num);
     this->name = _strdup(name);
-    this->type = type | TYPE_ARRAY;
-    this->arr_count = arr_num;
-
-    if (this->arr_count == 0)
-    {
-        this->arr_data = nullptr;
-        return;
-    }
-
-    switch (type ^ TYPE_ARRAY)
-    {
-    case TYPE_STRING:
-        this->arr_string = (struct block*)malloc(sizeof(struct block) * arr_num);
-        memset((void*)this->arr_string, 0, sizeof(struct block) * arr_num);
-        break;
-    
-    case TYPE_INT:
-        this->arr_int = (int64_t*)malloc(sizeof(int64_t) * arr_num);
-        memset((void*)this->arr_int, 0, sizeof(int64_t) * arr_num);
-        break;
-
-    case TYPE_FLOAT:
-        this->arr_float = (double*)malloc( sizeof(double) * arr_num);
-        memset((void*)this->arr_float, 0,   sizeof(double) * arr_num);
-        break;
-
-    case TYPE_STRUCT:
-        this->arr_struct = (var*)malloc( sizeof(var) * arr_num);
-        memset((void*)this->arr_struct, 0, sizeof(var) * arr_num);
-        break;
-
-    case TYPE_BOOL:
-        this->arr_bool = (bool *)malloc( sizeof(bool) * arr_num);
-        memset((void*)this->arr_bool, 0, sizeof(bool) * arr_num);
-        break;
-
-    default:
-        std::cerr << "Unregistered type";
-        exit(-1);
-        break;
-    }
-
 }
 
 void var::clear()
 {
-    char buffer[1000];
     if (this->name)
     {
-        strcpy_s(buffer, this->name);
         delete this->name;
+        this->name = nullptr;
     }
     
     if (this->type & TYPE_ARRAY)
     {
         free(this->arr_data);
-    } else if (this->type == TYPE_STRUCT)
+    }
+    else if (this->type == TYPE_STRUCT)
     {
-        //delete this->data2.str;
-        if (this->struct_count)
+        for (size_t i = 0; i < struct_count; i++)
         {
-            delete this->struct_data;
-            this->struct_count = 0;
-        }//std::cout << ",kijnuhbygv";
+            struct_data[i].clear();
+        }
+        struct_count = 0;
+        delete this->struct_data;
+        if (struct_type)
+        {
+            delete struct_type;
+        }
+    }
+    else
+    {
+        if (this->type == TYPE_STRING)
+        {
+            delete this->string_data;
+        }
+        else
+        {
+            this->data1.i = 0;
+            this->data2.i = 0;
+            this->data3.i = 0;
+        }
     }
     
 
@@ -195,7 +185,7 @@ var* var::dup(char* name)
     
     if (this->type & TYPE_ARRAY)
     {
-        v = new var(this->type, this->arr_count);
+        v = new var(this->type, this->arr_size);
         if (name)
         {
             v->name = _strdup(name);
@@ -204,7 +194,7 @@ var* var::dup(char* name)
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 v->arr_int[i] = this->arr_int[i];
             }//std::cout << (int64_t)v->name[1];printf("%p, ", &v->block[i].data1.i);printf("end %p", v->name);
@@ -212,14 +202,14 @@ var* var::dup(char* name)
             break;
 
         case TYPE_FLOAT:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 v->arr_float[i] = this->arr_float[i];
             }
             break;
 
         case TYPE_STRING:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 v->arr_string[i].data = _strdup(this->arr_string[i].data);
                 v->arr_string[i].length = this->arr_string[i].length;
@@ -318,21 +308,6 @@ char* get_datatype(int type)
     default:
         return _strdup("NULL");
     }
-}
-
-static bool sen_comp(char* str, const char* prod)
-{
-    //int max_len = stop_at(str, "\n");
-    int prod_len = strlen(prod);
-
-    for (size_t i = 0; i < prod_len; i++)
-    {
-        if (prod[i] != str[i])
-        {
-            return false;
-        }
-    }
-    return true;
 }
 
 int get_datatype_i(char* type)
@@ -544,11 +519,6 @@ int var::compare(var& data)
 
 void print_var(var* o, int offset)
 {
-    if ( o->type == TYPE_BUFFER )
-    {
-        std::cerr << "Cant printing buffer";
-    }
-    
     std::string space;// std::cout << o->name << offset << std::endl;
     for (size_t i = 0; i < offset; i++)
     {
@@ -565,11 +535,16 @@ void print_var(var* o, int offset)
         std::cout << o->name << " = ";
     }
 
+    if ( o->type == TYPE_BUFFER )
+    {
+        std::cerr << "Cant printing buffer";
+        return;
+    }
 
     if (o->type & TYPE_ARRAY)
     {
         std::cout << "[ ";
-        if (o->arr_count == 0)
+        if (o->arr_size == 0)
         {
             std::cout << "]";
             return;
@@ -579,7 +554,7 @@ void print_var(var* o, int offset)
         switch (o->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (i = 0; i < o->arr_count - 1; i++)
+            for (i = 0; i < o->arr_size - 1; i++)
             {
                 //printf("%")
                 std::cout << o->arr_int[i] << ", ";
@@ -588,7 +563,7 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_FLOAT:
-            for (i = 0; i < o->arr_count - 1; i++)
+            for (i = 0; i < o->arr_size - 1; i++)
             {
                 std::cout << o->arr_float[i] << ", ";
             }
@@ -596,7 +571,7 @@ void print_var(var* o, int offset)
             break;
 
         case TYPE_BOOL:
-            for (i = 0; i < o->arr_count - 1; i++)
+            for (i = 0; i < o->arr_size - 1; i++)
             {
                 if (o->arr_bool[i])
                 {
@@ -616,7 +591,7 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_STRING:
-            for (i = 0; i < o->arr_count - 1; i++)
+            for (i = 0; i < o->arr_size - 1; i++)
             {
                 std::cout << "\"" << o->arr_string[i].data << "\", ";
             }
@@ -633,7 +608,7 @@ void print_var(var* o, int offset)
         int64_t limit = o->struct_count-1;
         int64_t i;
 
-        if (o->arr_count == 0)
+        if (o->arr_size == 0)
         {
             std::cout << "{ }";
             return;
@@ -706,11 +681,11 @@ void var::print()
     }
     
     if (this->type & TYPE_ARRAY)
-    {std::cout << " size = " << this->arr_count << std::endl;
+    {std::cout << " size = " << this->arr_size << std::endl;
         std::cout << "[ ";
         size_t i = 0;
         
-        if (this->arr_count == 0)
+        if (this->arr_size == 0)
         {
             std::cout << "]";
             return;
@@ -719,7 +694,7 @@ void var::print()
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (i = 0; i < this->arr_count - 1; i++)
+            for (i = 0; i < this->arr_size - 1; i++)
             {
                 //printf("%")
                 std::cout << this->arr_int[i] << ", ";
@@ -728,7 +703,7 @@ void var::print()
             break;
         
         case TYPE_FLOAT:
-            for (i = 0; i < this->arr_count - 1; i++)
+            for (i = 0; i < this->arr_size - 1; i++)
             {
                 std::cout << this->arr_float[i] << ", ";
             }
@@ -736,7 +711,7 @@ void var::print()
             break;
 
         case TYPE_BOOL:
-            for (i = 0; i < this->arr_count - 1; i++)
+            for (i = 0; i < this->arr_size - 1; i++)
             {
                 if (this->arr_bool[i])
                 {
@@ -756,7 +731,7 @@ void var::print()
             break;
         
         case TYPE_STRING:
-            for (i = 0; i < this->arr_count - 1; i++)
+            for (i = 0; i < this->arr_size - 1; i++)
             {
                 std::cout << "\"" << this->arr_string[i].data << "\", ";
             }
@@ -773,7 +748,7 @@ void var::print()
         int64_t limit = this->struct_count-1;
         int64_t i;
 
-        if (this->arr_count == 0)
+        if (this->arr_size == 0)
         {
             std::cout << "{ }";
             return;
@@ -843,32 +818,32 @@ int var::save(const char* filename)
 
     if (this->type & TYPE_ARRAY)
     {
-        file.write((char*)&this->arr_count, 8);
+        file.write((char*)&this->arr_size, 8);
         switch (this->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 file.write((char*)&this->arr_int[i], 8);
             }
             break;
         
         case TYPE_FLOAT:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 file.write((char*)&this->arr_float[i], 8);
             }
             break;
 
         case TYPE_BOOL:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 file.write((char*)&this->arr_bool[i], 1);
             }
             break;
 
         case TYPE_STRING:
-            for (size_t i = 0; i < this->arr_count; i++)
+            for (size_t i = 0; i < this->arr_size; i++)
             {
                 file.write((char*)&this->arr_string[i].length, 8);
                 file.write(this->arr_string[i].data, this->arr_string[i].length + 1);
@@ -908,6 +883,101 @@ int var::save(const char* filename)
     return 0;
 }
 
+void var::copy(var& data) {
+    this->copy(&data);
+}
+
+void var::copy(var* data) {
+    if (this->name)
+    {
+        delete this->name;
+    }
+    this->name = _strdup(data->name);
+    this->info1 = data->info1;
+    this->info2 = data->info2;
+    this->info3 = data->info3;
+    this->type =  data->type;
+
+    if (this->type & TYPE_ARRAY)
+    {
+        this->arr_size = data->arr_size;
+        this->arr_capacity = data->arr_capacity;
+
+        switch (type ^ TYPE_ARRAY)
+        {
+        case TYPE_STRING:
+            this->arr_string = (struct block*)malloc(sizeof(struct block) * arr_capacity);
+            for (size_t i = 0; i < arr_size; i++)
+            {
+                this->arr_string[i].data = _strdup(data->arr_string[i].data);
+                this->arr_string[i].length = data->arr_string[i].length;
+            }
+            break;
+
+        case TYPE_INT:
+            this->arr_int = (int64_t*)malloc(sizeof(int64_t) * arr_capacity);
+            memcpy((void*)this->arr_int, (void*)this->arr_int, sizeof(int64_t) * arr_capacity);
+            break;
+
+        case TYPE_FLOAT:
+            this->arr_float = (double*)malloc(sizeof(double) * arr_capacity);
+            memcpy((void*)this->arr_float, (void*)this->arr_float, sizeof(double) * arr_capacity);
+            break;
+
+        case TYPE_STRUCT:
+            this->arr_struct = (var*)malloc(sizeof(var) * arr_capacity); std::cout << "jnucbuebc"; exit(-1);
+            memset((void*)this->arr_struct, 1, sizeof(var) * arr_capacity);
+            break;
+
+        case TYPE_BOOL:
+            this->arr_bool = (bool*)malloc(sizeof(bool) * arr_capacity);
+            memset((void*)this->arr_bool, 1, sizeof(bool) * arr_capacity);
+            break;
+
+        default:
+            std::cerr << "Unregistered type";
+            exit(-1);
+            break;
+        }
+    }
+    else if (this->type == TYPE_STRUCT)
+    {
+        this->struct_count = data->struct_count;
+        this->struct_data = (var*)malloc(sizeof(var) * struct_count);
+
+        for (size_t i = 0; i < struct_count; i++)
+        {
+            this->struct_data[i].name = nullptr;
+            this->struct_data[i].copy(data->struct_data[i]);
+            
+        }
+    }
+    else
+    {
+        if (this->type == TYPE_STRING)
+        {
+            this->string_data = _strdup(data->string_data);
+            this->string_length = data->string_length;
+        }
+        else if (this->type == TYPE_BUFFER)
+        {
+            
+        }
+        else
+        {
+            this->data1 = data->data1;
+        }
+    }
+}
+
+void var::rename(const char* name){
+    if (this->name)
+    {
+        delete this->name;
+    }
+    this->name = _strdup(name);
+}
+
 // Array
 int var::arr_write(int index, variant data)
 {
@@ -917,9 +987,9 @@ int var::arr_write(int index, variant data)
         exit(-1);
     }
 
-    if (this->arr_count-1 < index)
+    if (this->arr_size-1 < index)
     {
-        std::cerr << this->name << " got an overflow with " << this->arr_count << " to " << index << std::endl;
+        std::cerr << this->name << " got an overflow with " << this->arr_size << " to " << index << std::endl;
         exit(-1);
     }
     
@@ -964,9 +1034,9 @@ int var::arr_write(int index, var& data)
         exit(-1);
     }
 
-    if (this->arr_count-1 < index)
+    if (this->arr_size-1 < index)
     {
-        std::cerr << this->name << " got an overflow with the size of " << this->arr_count << " to index " << index << std::endl;
+        std::cerr << this->name << " got an overflow with the size of " << this->arr_size << " to index " << index << std::endl;
         exit(-1);
     }
     
@@ -997,6 +1067,26 @@ int var::arr_write(int index, var& data)
     return 0;
 }
 
+void var::arr_push(var& data) {
+
+    if (!(this->type & TYPE_ARRAY))
+    {
+        std::cerr << this->name << " is not an array but " << get_datatype(this->type) << std::endl;
+        exit(-1);
+    }
+
+    if ((this->type ^ TYPE_ARRAY) != data.type)
+    {
+        std::cerr << "Expected " << get_datatype(this->type) << " but given " << get_datatype(this->type) << std::endl;
+        exit(-1);
+    }
+
+    if ((this->arr_size + 1) > this->arr_capacity)
+    {
+
+    }
+}
+
 // dont use this
 /*
 int64_t var::arr_find(variant data)
@@ -1010,7 +1100,7 @@ int64_t var::arr_find(variant data)
     switch (this->type ^ TYPE_ARRAY)
     {
     case TYPE_INT:
-        for (size_t i = 0; i < this->arr_count; i++)
+        for (size_t i = 0; i < this->arr_size; i++)
         {
             if (num[i] == data.i)
             {
@@ -1020,7 +1110,7 @@ int64_t var::arr_find(variant data)
         break;
     
     case TYPE_STRING:
-        for (size_t i = 0; i < this->arr_count; i++)
+        for (size_t i = 0; i < this->arr_size; i++)
         {
             if ( strcmp(data.str, arr_string[i].data2.str) == 0 )
             {
@@ -1031,7 +1121,7 @@ int64_t var::arr_find(variant data)
 
     case TYPE_BOOL:
         bo = &this->_data.b;
-        for (size_t i = 0; i < this->arr_count; i++)
+        for (size_t i = 0; i < this->arr_size; i++)
         {
             if (bo[i] == data.b)
             {
@@ -1056,9 +1146,9 @@ variant var::operator[](int64_t index)
         exit(-1);
     }
 
-    if (this->arr_count-1 < index)
+    if (this->arr_size-1 < index)
     {
-        std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_count << std::endl;
+        std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_size << std::endl;
         exit(-1);
     }
     variant return_data;
@@ -1095,7 +1185,7 @@ variant var::operator[](int64_t index)
 }
 
 // Buffer
-int var::buf_write(void* data, int64_t len, int flag)
+int var::buf_do(void* data, int64_t len, int flag)
 {
     if (!(this->type == TYPE_BUFFER))
     {
@@ -1103,28 +1193,68 @@ int var::buf_write(void* data, int64_t len, int flag)
         exit(-1);
     }
 
-    switch (flag)
-    {
-    case BUFFER_WRITE_OVER:
+    bool is_user_mem = false;
+    bool is_holding_mem = false;
 
-        if (this->length != 0)
+    if (this->buf_info[0] == 'M')
+    {
+        is_holding_mem = true;
+        if ( ( (uint16_t*)&this->buf_info[1] )[0] == 0x4D4D)
         {
-            free(this->data1.ptr);
+            is_user_mem = true;
         }
-        memcpy(this->data1.ptr, data, len);
-        this->length = len;
-        break;
-    
-    case BUFFER_WRITE_APPEND:
-        
-        //this->data1.ptr = realloc(this->data1.ptr, this->length + len);
-        //memcpy((this->data1.ptr) + this->length, data, len);
-        //this->length += len;
-        break;
     }
 
+    switch (flag)
+    {
+    case BUFFER_DO_WRITE:
+        if (!is_user_mem)
+        {
+            return BUFFER_ERROR_NOPERMISSION;
+        }
+        if (!buf_number)
+        {
+            free(buf_data);
+        }
+        buf_number = len;
+        buf_data = malloc(len);
+        memcpy(buf_data, data, len);
+        break;
+
+    case BUFFER_DO_APPEND:
+        if (!is_user_mem)
+        {
+            return BUFFER_ERROR_NOPERMISSION;
+        }
+        buf_number += len;
+        buf_data = realloc(buf_data, buf_number);
+        memcpy(buf_data, data, len);
+        break;
+
+    case BUFFER_DO_READ:
+        if (!is_user_mem)
+        {
+            return BUFFER_ERROR_NOPERMISSION;
+        }
+        memcpy(data, buf_data, buf_number);
+        break;
     
-    return 0;
+    case BUFFER_DO_DESTROY:
+        if (is_holding_mem)
+        {
+            free(buf_data);
+        }else
+        {
+            return BUFFER_ERROR_DELETINGPOINTER;
+        }
+        break;
+    default:
+        break;
+    }
+    
+
+    
+    return BUFFER_ERROR_NONE;
 }
 
 // Structure
@@ -1204,39 +1334,6 @@ var* var::struct_find(const char* member)
     return 0;
 }
 
-//var* var::struct_create(var variable)
-//{
-//    if (!(this->type == TYPE_STRUCT))
-//    {
-//        std::cerr << this->name << " is not an structure" << std::endl;
-//        exit(-1);
-//    }
-//
-//    if (this->struct_find(variable.name))
-//    {
-//        std::cerr << this->name << " already has " << variable.name << std::endl;
-//        exit(-1);
-//    }
-//    
-//
-//    var* pos;
-//
-//    if (count == 0)
-//    {
-//        data1.ptr = malloc(sizeof(var));
-//        pos = data1.var;
-//    }else
-//    {
-//        data1.ptr = realloc(data1.ptr, ++count);
-//        pos = &( this->data1.var[count-1] );
-//    }
-//        
-//    this->arr_count++;
-//    pos = new var(variable.name, variable.type);
-//    
-//    return pos;
-//}
-
 var* var::struct_create(const char* member, uint8_t type)
 {
     if (!(this->type == TYPE_STRUCT))
@@ -1244,15 +1341,8 @@ var* var::struct_create(const char* member, uint8_t type)
         std::cerr << this->name << " is not an structure" << std::endl;
         exit(-1);
     }
-    
-    //if (this->struct_find(member))
-    //{
-    //    std::cerr << this->name << " already has " << member << std::endl;
-    //    exit(-1);
-    //}
-//printf("creating %s ", member);
 
-    if (this->arr_count == 0)
+    if (this->struct_count == 0)
     {
         this->struct_data = (var*)malloc(sizeof(var));
         //printf("allloc pos = %p, ", pos); pos = this->struct_data;
@@ -1264,7 +1354,7 @@ var* var::struct_create(const char* member, uint8_t type)
     var& pos = this->struct_data[struct_count];
 
     this->struct_count++;
-    pos = var(member, type); //std::cout << "Created " << pos->name << this->arr_count;
+    pos = var(member, type); //std::cout << "Created " << pos->name << this->arr_size;
     //pos->name = _strdup(member);
     //std::cout << pos->name;
     return &pos;
@@ -1277,15 +1367,8 @@ var* var::struct_create(const char* member, uint8_t type, int64_t count)
         std::cerr << this->name << " is not an structure" << std::endl;
         exit(-1);
     }
-    
-    //if (this->struct_find(member))
-    //{
-    //    std::cerr << this->name << " already has " << member << std::endl;
-    //    exit(-1);
-    //}
-//printf("creating %s ", member);
 
-    if (this->arr_count == 0)
+    if (this->struct_count == 0)
     {
         this->struct_data = (var*)malloc(sizeof(var));
         //printf("allloc pos = %p, ", pos); pos = this->struct_data;
@@ -1297,10 +1380,40 @@ var* var::struct_create(const char* member, uint8_t type, int64_t count)
     var& pos = this->struct_data[struct_count];
 
     this->struct_count++;
-    pos = var(member, type, count); //std::cout << "Created " << pos->name << this->arr_count;
+    pos = var(member, type, count); //std::cout << "Created " << pos->name << this->arr_size;
     //pos->name = _strdup(member);
     //std::cout << pos->name;
     return &pos;
+}
+
+var* var::struct_create(var& data){
+    return this->struct_create(&data);
+}
+
+var* var::struct_create(var* data) {
+    if (!(this->type == TYPE_STRUCT))
+    {
+        std::cerr << this->name << " is not an structure" << std::endl;
+        exit(-1);
+    }
+
+    if (this->struct_count == 0)
+    {
+        this->struct_data = (var*)malloc(sizeof(var));
+        //printf("allloc pos = %p, ", pos); pos = this->struct_data;
+    }
+    else
+    {
+        this->struct_data = (var*)realloc(data3.ptr, (sizeof(var) * (this->struct_count + 1)));
+        //printf("realloc pos = %p, ", pos); pos = &( this->struct_data[this->struct_count] );
+    }
+    var* pos = &this->struct_data[struct_count];
+    pos->name = nullptr;
+
+    this->struct_count++;
+    pos->copy(data);
+
+    return pos;
 }
 
 var* var::operator[](const char* member)

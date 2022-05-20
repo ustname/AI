@@ -30,6 +30,7 @@ union variant
     char* str;
     uint8_t* buf;
     void* ptr;
+    void** pp;
     bool b;
     var* var;
     variant* variant;
@@ -55,8 +56,16 @@ enum DATATYPE
     TYPE_BUFFER = 24,
 };
 
-enum BUFFER_WRITE
+enum BUFFER_DO
 {
-    BUFFER_WRITE_OVER,
-    BUFFER_WRITE_APPEND,
+    BUFFER_DO_DESTROY,
+    BUFFER_DO_WRITE,
+    BUFFER_DO_APPEND,
+    BUFFER_DO_READ,
+};
+
+enum BUFFER_DO_ERROR{
+    BUFFER_ERROR_NONE = 0,
+    BUFFER_ERROR_DELETINGPOINTER = -1,
+    BUFFER_ERROR_NOPERMISSION = -2,
 };

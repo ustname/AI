@@ -1,0 +1,21 @@
+
+
+buffer = {
+	.buf_info : char[8]
+	.buf_number : int64_t
+	.buf_data
+}
+
+.buf_info = {
+	[0] = {
+		'M' = has memory allocation, so it must be dealocated,
+		'P' = just holding a pointer
+	}
+	[1-7] = {
+		'00' = undefined pointer,
+		'MM' = memory from malloc,
+		'FL' = FILE object,
+		'TM' = time object,
+		'TH' = thread object
+	}
+}

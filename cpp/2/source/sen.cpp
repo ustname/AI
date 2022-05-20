@@ -99,11 +99,25 @@ void print_len(char* str, uint64_t len)
     printf("%.*s, %d", len, str, len);
 }
 
+int64_t sen_len(const char* str) {
+    int64_t i = 0;
+    while (str[i++])
+    {
+        str[i];
+    }
+    return i;
+}
+
 bool sen_comp(const char* str, const char* prod)
 {
     //int max_len = stop_at(str, "\n");
     int prod_len = strlen(prod);
-
+    int str_len =  strlen(str);
+    if (prod_len != str_len)
+    {
+        return false;
+    }
+    int stop;
     for (size_t i = 0; i < prod_len; i++)
     {
         if (prod[i] != str[i])

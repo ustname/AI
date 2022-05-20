@@ -18,20 +18,23 @@ public:
     {
         variant _data;
         variant data1;
-        int64_t length; 
-        int64_t arr_count; 
+        int64_t length;
+        int64_t arr_size;
         int64_t string_length;
         int64_t int_data;
         double float_data;
         bool bool_data;
         int64_t struct_count;
+        char buf_info[8];
     };
     
     union //This is data 2
     {
         variant data2;
+        int64_t arr_capacity;
         char* string_data;
         char* struct_type;
+        int64_t buf_number;
     };
 
     union //This is data 3
@@ -44,6 +47,7 @@ public:
         struct block* arr_string;
         var* arr_struct;
         void* arr_data;
+        void* buf_data;
     };
     
 
@@ -61,6 +65,7 @@ public:
     int arr_write(int index, var& data);
     var* arr_struct_create(const char* member, uint8_t type, int64_t count);
     int64_t arr_find(variant data);
+    void arr_push(var& data);
     variant operator[](int64_t index);
     // Structure
     int struct_write(const char* member, variant data);
@@ -69,13 +74,12 @@ public:
     int struct_write(const char* member, int64_t index, variant data);
     var* struct_create(const char* member, uint8_t type);
     var* struct_create(const char* member, uint8_t type, int64_t count);
+    var* struct_create(var& data);
+    var* struct_create(var* data);
     var* struct_find(const char* member);
-    int struct_class(const var& object);
-    var* struct_declare(const char* member, char* class_name);
     var* operator[](const char* name);
     // Buffer
-    int buf_write(void* data, int64_t len, int flag);
-
+    int buf_do(void* src, int64_t len, int flag);
     //var* struct_write(char* member, _data data);
 
     var();
@@ -85,7 +89,11 @@ public:
     var(uint8_t type, int64_t arr_num);
     var(uint8_t type);
     int retype(uint8_t type);
+    void rename(const char* name);
     var* dup(char* name);
+    void copy(var& data);
+    void copy(var* data);
+    int assign(var& data);
     void clear();
 };
 
