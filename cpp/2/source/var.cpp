@@ -333,6 +333,33 @@ int get_datatype_i(char* type)
     
 }
 
+static void _struct_write(var& new_struct, var& old_struct){
+
+    if (!new_struct.struct_count)
+    {
+        for (size_t i = 0; i < old_struct.struct_count; i++)
+        {
+            new_struct.struct_create(old_struct.struct_data[i]);
+        }
+    }else
+    {
+        for (size_t i = 0; i < old_struct.struct_count; i++)
+        {
+            if ( !new_struct.struct_find(old_struct.struct_data[i].name) )
+            {
+                new_struct.struct_create(old_struct.struct_data[i]);
+            }
+        }
+    }
+
+    if (old_struct.struct_type)
+    {
+        new_struct.struct_type = _strdup(old_struct.name);
+    }
+    
+    return;
+}
+
 // Single data
 int var::write(variant data)
 {
@@ -379,20 +406,35 @@ int var::write(variant data)
 
 int var::write(var& v)
 {
-    if ( (this->type == TYPE_ARRAY) || (this->type == TYPE_STRUCT) || (this->type == TYPE_BUFFER) )
+    if ( (this->type & TYPE_ARRAY) || (this->type == TYPE_BUFFER) )
     {
         std::cerr << "Cant write single data into \"" << this->name << "\" since the data type was " << get_datatype(this->type) << std::endl;
         exit(-1);
-    }else if ( (v.type == TYPE_ARRAY) || (v.type == TYPE_STRUCT) || (v.type == TYPE_BUFFER) )
+    }else if ( (v.type & TYPE_ARRAY) || (v.type == TYPE_BUFFER) )
     {
         std::cerr << "Cant write single data into \"" << this->name << "\" since the data type was " << get_datatype(this->type) << " from variable " << v.name << " has data type " << get_datatype(v.type) << std::endl;
+        exit(-1);
+    }
+
+    if (this->type & TYPE_ARRAY)
+    {
+        std::cerr << "Not written yet for array\n";
         exit(-1);
     }
     
     if (this->type != v.type)
     {
-        std::cerr << "Cant write " << v.name << " into " << this->name << std::endl;
-        exit(-1);
+        if ( 
+            ((this->type == TYPE_INT) || (this->type == TYPE_FLOAT)) & 
+                ((v.type == TYPE_INT) || (v.type == TYPE_FLOAT)) 
+                )
+        {
+            
+        }else
+        {
+            std::cerr << "Cant write " << this->name << " to " << v.name << std::endl;
+            exit(-1);
+        }
     }
 
     switch (this->type)
@@ -423,12 +465,20 @@ int var::write(var& v)
         this->data1.b = v.data1.b;
         break;
 
+    case TYPE_STRUCT:
+        _struct_write(*this, v);
+        break;
+
     default:
         std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
         exit(-1);
     }
     
     return 0;
+}
+
+int var::write(var* v){
+    return this->write(*v);
 }
 
 variant var::read()

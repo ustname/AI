@@ -17,6 +17,7 @@ namespace bsi
     var* search(char* member, int& src);
     var* function(const char* name, var& member, char* str);
     int push_class(var& new_class);
+    int declare_class(const char* new_var, var& class_var);
 }
 
 enum BSI_VAR_SOURCE{

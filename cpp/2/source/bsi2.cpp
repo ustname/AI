@@ -80,6 +80,11 @@ int bsi::push_class(var& data) {
     return 0;
 }
 
+int bsi::declare_class(const char* new_var, var& class_var) {
+    var* temp = bsi::bsi_root->struct_create(new_var, TYPE_STRUCT);
+    return 0;
+}
+
 var* bsi::init()
 {
     var* root = new var("root", TYPE_STRUCT);

@@ -551,8 +551,7 @@ var* declare(var& root, std::vector<unit>& line, int& offset)
             }else if (ret == 6)
             {
                 pos = root.struct_create(line[1].info2.str, TYPE_STRUCT);
-                pos->copy(declare_class);
-                pos->rename(line[1].info2.str);
+                pos->write(declare_class);
                 return pos;
             }
             else

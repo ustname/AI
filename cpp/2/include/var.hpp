@@ -54,6 +54,7 @@ public:
     // Single data
     int write(variant data);
     int write(var& data);
+    int write(var* data);
     variant read();
     variant read(int64_t index);
     int compare(var& data);
