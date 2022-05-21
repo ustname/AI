@@ -43,7 +43,7 @@ var* bsi::search(char* member, int& src)
 
 int function_loader(var& buffer, char* str);
 
-var* bsi::function(const char* name, var& member, char* str)
+var* bsi::push_function(const char* name, var& member, char* str)
 {
     var* function = new var(name, TYPE_STRUCT);
     function->struct_type = _strdup("function");
@@ -63,6 +63,13 @@ int function_loader(var& buffer, char* str){
     return 0;
 }
 
+static int push_class(var* class_struct, var& child) {
+    var* temp = class_struct->struct_create(child.name, TYPE_STRUCT);
+    temp->write(child);
+    temp->struct_type = _strdup("class");
+    return 0;
+}
+
 int bsi::push_class(var& data) {
     var* root_class = bsi::bsi_root->struct_find("class");
     int64_t count = root_class->struct_count;
@@ -76,13 +83,14 @@ int bsi::push_class(var& data) {
         }
     }
 
-    root_class->struct_create(data);
-    return 0;
+    return push_class(root_class, data);
 }
 
-int bsi::declare_class(const char* new_var, var& class_var) {
+var* bsi::declare_class(const char* new_var, var* prod) {
     var* temp = bsi::bsi_root->struct_create(new_var, TYPE_STRUCT);
-    return 0;
+    temp->write(prod);
+    temp->struct_type = _strdup(prod->name);
+    return temp;
 }
 
 var* bsi::init()

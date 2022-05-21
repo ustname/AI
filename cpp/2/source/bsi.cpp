@@ -299,6 +299,11 @@ bool islegal_name(char* str)
     return true;
 }
 
+void __false_syntax(){
+    std::cerr << "False syntax\n";
+    exit(-1);
+}
+
 char* read_value_string(var& root, std::vector<unit>& line, int offset, int64_t& ret_len);
 
 double read_value_float(var& root, std::vector<unit>& line, int& offset);
@@ -550,9 +555,17 @@ var* declare(var& root, std::vector<unit>& line, int& offset)
                 return root.struct_create(line[1].info2.str, TYPE_BOOL);
             }else if (ret == 6)
             {
-                pos = root.struct_create(line[1].info2.str, TYPE_STRUCT);
-                pos->write(declare_class);
-                return pos;
+                if (declare_class)
+                {
+                    pos = bsi::declare_class(line[1].info2.str, declare_class);
+                    pos->write(declare_class);
+                    return pos;
+                }
+                else
+                {
+                    pos = root.struct_create(line[1].info2.str, TYPE_STRUCT);
+                    return pos;
+                }
             }
             else
             {
@@ -596,22 +609,6 @@ int read_value(char* str, var& stored)
     return 0;
 }
 */
-
-int read_function(var& root, std::vector<unit>& line, int offset, char* str)
-{
-    if (line[offset].info1 != UNIT_OPERATOR)
-    {
-        return 0;
-    }
-
-    if (line[offset].info2.i != OP_BRACKET_LEFT)
-    {
-        return 0;
-    }
-    
-    
-    return true;
-}
 
 int read_operator(char* str, int& len)
 {
@@ -2184,12 +2181,140 @@ int64_t read_value_int(var& root, std::vector<unit>& line, int& offset)
     return value1;
 }
 
-int assignment(var* dst, var& root, std::vector<unit>& line, int& offset)
+enum GET_VAR_INFO{
+    GET_VAR_INFO_VAR = 1,
+    GET_VAR_INFO_ARRAY,
+};
+
+class _get_var_info{
+public:
+    char type;
+    int64_t offset;
+    _get_var_info(){
+        type = 0;
+        offset = -1;
+    }
+};
+
+var* get_var(var& root, std::vector<unit>& line, int& offset, _get_var_info& info)
+{
+    var* dest;
+    int is_const = 0;
+    if (!line[offset].info1 == UNIT_NAME){
+        return 0;
+    }
+
+    dest = bsi::search(line[offset].info2.str, is_const);
+    if (!dest){
+        std::cerr << "Undefined " << line[offset].info2.str << std::endl;
+        exit(-1);
+    }
+
+    info = _get_var_info();
+    
+    while (true)
+    {
+        ++offset;
+        if (offset == line.size())
+        {
+            return dest;
+        }
+
+        if (line[offset].info1 == UNIT_OPERATOR)
+        {
+            /// Dot operator
+            if (line[offset].info2.i == OP_DOT)
+            {
+                /// Struct accessing
+                if (dest->type == TYPE_STRUCT)
+                {
+                    ++offset;
+                    if (offset == line.size())
+                    {
+                        std::cerr << "Expected a child name\n";
+                        exit(-1);
+                    }
+                    /// Accessing struct child with name
+                    if (line[offset].info1 == UNIT_NAME)
+                    {
+                        info.type = GET_VAR_INFO_VAR;
+                        info.offset = dest->struct_find_index(line[offset].info2.str);
+                        if (info.offset == -1)
+                        {
+                            std::cerr << "Undefined " << line[offset].info2.str << " \n";
+                            exit(-1);
+                        }
+                        dest = dest->struct_pos(info.offset);
+                        continue;
+                    }
+                    /// Access no more
+                    else
+                    {
+                        break;
+                    }
+                }
+                /// Not a struct but using dot syntax
+                else
+                {
+                    std::cerr << "Dot syntax is only for struct type\n";
+                    exit(-1);
+                }
+            }
+            /// Array accessing
+            else if (line[offset].info2.i == OP_SQUAREBRACKET_LEFT)
+            {
+                if (dest->type & TYPE_ARRAY)
+                {
+                    int type = dest->type ^ TYPE_ARRAY;
+
+                    ++offset;
+                    if (offset == line.size())
+                    {
+                        std::cerr << "Expected an array index number\n";
+                        exit(-1);
+                    }
+
+                    int64_t arr_index = read_value_int(root, line, offset);
+                    if (line[offset].info2.i != OP_SQUAREBRACKET_RIGHT)
+                    {
+                        std::cerr << "Expected closing bracket\n";
+                        exit(-1);
+                    }
+
+                    if (type == TYPE_STRUCT)
+                    {
+                        dest = &dest->arr_struct[arr_index];
+                        info.type = GET_VAR_INFO_VAR;
+                    }
+                    else
+                    {
+                        info.type = GET_VAR_INFO_ARRAY;
+                        info.offset = arr_index;
+                    }
+                    continue;
+                }
+                else
+                {
+                    std::cerr << "Squarebracket syntax is only for array type\n";
+                    exit(-1);
+                }
+            }
+            /// The operator are not dot or array, then this is the last getting variable
+            else
+            {
+                break;
+            }
+        }
+        
+    }
+    return dest;
+}
+
+int assignment(var* dst, var& root, std::vector<unit>& line, int& offset, const _get_var_info& info)
 {
     if (!(line[offset].info1 == UNIT_OPERATOR))
     {
-        std::cerr << "Error syntax\n";
-        exit(-1);
+        __false_syntax();
     }
 
     var* right = dst;
@@ -2245,101 +2370,6 @@ int assignment(var* dst, var& root, std::vector<unit>& line, int& offset)
     
 
     
-}
-
-var* get_var(var& root, std::vector<unit>& line, int& offset){
-    var* dest;
-    int is_const = 0;
-    if (!line[offset].info1 == UNIT_NAME){
-        return 0;
-    }
-
-    dest = bsi::search(line[offset].info2.str, is_const);
-    if (!dest){
-        std::cerr << "Undefined " << line[offset].info2.str << std::endl;
-        exit(-1);
-    }
-    
-    while (true)
-    {
-        ++offset;
-        if (offset == line.size())
-        {
-            return dest;
-        }
-
-        if (dest->type == TYPE_STRUCT)
-        {
-            if (line[offset].info1 == UNIT_OPERATOR){
-                if (line[offset].info2.i == OP_DOT){
-                    ++offset;
-                    if (line[offset].info1 == UNIT_NAME)
-                    {
-                        dest = dest->struct_find(line[offset].info2.str);
-                        if (!dest)
-                        {
-                            std::cerr << "Undefined " << line[offset].info2.str << " \n";
-                            exit(-1);
-                        }
-                        continue;
-                    }else
-                    {
-                        break;
-                    }
-                }else
-                {
-                    break;
-                }
-            }else
-            {
-                std::cerr << "Error syntax" << std::endl;
-                exit(-1);
-            }
-        }else if (dest->type & TYPE_ARRAY)
-        {
-            if ( (dest->type ^ TYPE_ARRAY) == TYPE_STRUCT )
-            {
-                if (line[offset].info1 == UNIT_OPERATOR){
-                    if (line[offset].info2.i == OP_SQUAREBRACKET_LEFT){
-                        ++offset;
-                        int64_t arr_index = read_value_int(root, line, offset);
-                        if (line[offset].info1 == UNIT_OPERATOR)
-                        {
-                            if (line[offset].info2.i == OP_SQUAREBRACKET_RIGHT)
-                            {
-                                dest = &dest->arr_struct[arr_index];
-                            }else
-                            {
-                                std::cerr << "Expected closing bracket\n";
-                                exit(-1);
-                            }
-                            ++offset;
-                            continue;
-                        }else
-                        {
-                            std::cerr << "Expected closing bracket\n";
-                            exit(-1);
-                        }
-                    }else
-                    {
-                        break;
-                    }
-                }else
-                {
-                    std::cerr << "Error syntax" << std::endl;
-                    exit(-1);
-                }
-            }else
-            {
-                break;
-            }
-        }else
-        {
-            break;
-        }
-        
-    }
-    return dest;
 }
 
 int right_value(var& root, std::vector<unit>& line, int& offset, var& stored)
@@ -2604,33 +2634,27 @@ void run(var& root, std::vector<unit>& line, int& offset){
     var* left_var{};
     var temp = var();
     int is_const = 0;
+    _get_var_info _info;
     if (keyword(root, line))
     {
         
     }
     else if (left_var = declare(root, line, offset))
     {
-        //std::cout << "ret = " << ret << " " << line[0].info2.str << std::endl;
-        
         if (line[offset].info1 == UNIT_OPERATOR)
         {
             if (line[offset].info2.i == OP_EQUAL)
             {
                 ++offset;
-                temp.type = left_var->type; 
-                ret = right_value(root, line, offset, temp);
-                left_var->write(temp);
-                temp.clear();
+                assignment(left_var, root, line, offset, _info);
             }
         }
-        //if(root.struct_count == 2)
-        //    exit(-1);
     }
     else
     {
         if (line[0].info1 != UNIT_NAME)
         {
-            std::cerr << "Unclear instruction\n";
+            std::cerr << "Expected expression\n";
             exit(-1);
         }
         left_var = bsi::search(line[0].info2.str, is_const);
@@ -2639,13 +2663,12 @@ void run(var& root, std::vector<unit>& line, int& offset){
             std::cerr << "Undefined " << line[0].info2.str << std::endl;
             exit(-1);
         }
-
-        left_var = get_var(root, line, offset);
+        left_var = get_var(root, line, offset, _info);
         if (offset == line.size())
         {
             return;
         }
-        assignment(left_var, root, line, offset);
+        assignment(left_var, root, line, offset, _info);
     }
 }
 

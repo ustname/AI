@@ -4,7 +4,7 @@
 
 bool legal_type(int type)
 {
-    if (type > (TYPE_BUFFER | TYPE_ARRAY | TYPE_REFERENCE))
+    if (type > (TYPE_BUFFER | TYPE_ARRAY | TYPE_POINTER))
     {
         return false;
     }else if (type < 0)
@@ -60,9 +60,11 @@ var::var(uint8_t type)
         this->string_data = (char*)malloc(1);
         this->string_data[0] = '\0';
         break;
-    
+
     default:
         this->data1.i = NULL;
+        this->data2.i = NULL;
+        this->data3.i = NULL;
         break;
     }
 
@@ -126,7 +128,7 @@ var::var(const char* name, uint8_t type)
 // no multi array
 var::var(const char* name, uint8_t type, int64_t arr_num)
 {
-    if (type & TYPE_REFERENCE)
+    if (type & TYPE_POINTER)
     {
         std::cerr << "Reference type are not allowed to make an array" << std::endl;
         exit(-1);
@@ -302,7 +304,7 @@ char* get_datatype(int type)
         return _strdup("String");
     case TYPE_BUFFER :
         return _strdup("Buffer");
-    case TYPE_REFERENCE :
+    case TYPE_POINTER :
         return _strdup("Reference");
 
     default:
@@ -351,11 +353,6 @@ static void _struct_write(var& new_struct, var& old_struct){
             }
         }
     }
-
-    if (old_struct.struct_type)
-    {
-        new_struct.struct_type = _strdup(old_struct.name);
-    }
     
     return;
 }
@@ -388,7 +385,7 @@ int var::write(variant data)
         this->float_data = data.f;
         break;
 
-    case TYPE_REFERENCE:
+    case TYPE_POINTER:
         //this->data1.ptr = data.ptr;
         break;
 
@@ -456,7 +453,7 @@ int var::write(var& v)
         this->float_data = v.float_data;
         break;
 
-    case TYPE_REFERENCE:
+    case TYPE_POINTER:
         std::cout << "Not yet coded :p" << std::endl;
         exit(-1);
         break;
@@ -1188,52 +1185,6 @@ int64_t var::arr_find(variant data)
 }
 */
 
-variant var::operator[](int64_t index)
-{
-    if (!(this->type & TYPE_ARRAY))
-    {
-        std::cerr << this->name << " is not an array type" << std::endl;
-        exit(-1);
-    }
-
-    if (this->arr_size-1 < index)
-    {
-        std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_size << std::endl;
-        exit(-1);
-    }
-    variant return_data;
-    //std::cout << "not break";
-    switch (type ^ TYPE_ARRAY)
-    {
-    case TYPE_STRING:
-        return_data.str = this->arr_string[index].data;
-        break;
-    
-    case TYPE_INT:
-        return_data.i = this->arr_int[index];
-        break;
-
-    case TYPE_FLOAT:
-        return_data.f = this->arr_float[index];
-        break;
-
-    case TYPE_STRUCT:
-        return_data.var = &this->arr_struct[index];
-        break;
-
-    case TYPE_BOOL:
-        return_data.b = this->arr_bool[index];
-        break;
-
-    default:
-        std::cerr << "Unregistered type";
-        exit(-1);
-        break;
-    }
-    
-    return return_data;
-}
-
 // Buffer
 int var::buf_do(void* data, int64_t len, int flag)
 {
@@ -1384,6 +1335,29 @@ var* var::struct_find(const char* member)
     return 0;
 }
 
+int64_t var::struct_find_index(const char* member)
+{
+    if (!(this->type == TYPE_STRUCT))
+    {
+        std::cerr << this->name << " is not an structure" << std::endl;
+        exit(-1);
+    }
+
+    //int member_len = strlen(member);
+    var* temp = this->struct_data;
+    int64_t count = this->struct_count;
+    //std::cout << count;
+    for ( size_t i = 0; i < count; i++ )
+    {
+        if ( sen_comp(temp[i].name, member) )
+        {
+            return i;
+        }
+    }
+    int stop;
+    return -1;
+}
+
 var* var::struct_create(const char* member, uint8_t type)
 {
     if (!(this->type == TYPE_STRUCT))
@@ -1402,11 +1376,9 @@ var* var::struct_create(const char* member, uint8_t type)
         //printf("realloc pos = %p, ", pos); pos = &( this->struct_data[this->struct_count] );
     }
     var& pos = this->struct_data[struct_count];
-
     this->struct_count++;
-    pos = var(member, type); //std::cout << "Created " << pos->name << this->arr_size;
-    //pos->name = _strdup(member);
-    //std::cout << pos->name;
+
+    pos = var(member, type);
     return &pos;
 }
 
@@ -1428,11 +1400,9 @@ var* var::struct_create(const char* member, uint8_t type, int64_t count)
         //printf("realloc pos = %p, ", pos); pos = &( this->struct_data[this->struct_count] );
     }
     var& pos = this->struct_data[struct_count];
-
     this->struct_count++;
-    pos = var(member, type, count); //std::cout << "Created " << pos->name << this->arr_size;
-    //pos->name = _strdup(member);
-    //std::cout << pos->name;
+
+    pos = var(member, type, count);
     return &pos;
 }
 
@@ -1466,21 +1436,67 @@ var* var::struct_create(var* data) {
     return pos;
 }
 
-var* var::operator[](const char* member)
+var& var::operator[](int64_t index)
 {
-    if (!(this->type == TYPE_STRUCT))
+    var data;
+    variant value;
+    if (this->type & TYPE_ARRAY)
     {
-        std::cerr << this->name << " is not a strcuture type" << std::endl;
+        std::cerr << "Not for array\n";
         exit(-1);
-    }
+        if (this->arr_size-1 < index)
+        {
+            std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_size << std::endl;
+            exit(-1);
+        }
+        
+        data = var(this->type ^ TYPE_ARRAY);
 
-    var* pos = this->struct_find(member);
-    if (pos == nullptr)
+        switch (type ^ TYPE_ARRAY)
+        {
+        case TYPE_STRING:
+            value.str = this->arr_string[index].data;
+            break;
+
+        case TYPE_INT:
+            value.i = this->arr_int[index];
+            break;
+
+        case TYPE_FLOAT:
+            data.float_data = this->arr_float[index];
+            break;
+
+        case TYPE_STRUCT:
+            data.struct_data = &this->arr_struct[index];
+            break;
+
+        case TYPE_BOOL:
+            data.bool_data = this->arr_bool[index];
+            break;
+
+        default:
+            std::cerr << "Unregistered type";
+            exit(-1);
+            break;
+        }
+        data.write(value);
+        return data;
+
+    }else if (this->type == TYPE_STRUCT)
     {
-        std::cerr << "there is no member \"" << member << "\" in " << this->name << std::endl;
-        exit(-1);
+        if (this->struct_count-1 < index)
+        {
+            std::cerr << this->name << " is overflowing at index " << index << " while the count is " << this->arr_size << std::endl;
+            exit(-1);
+        }
+
+        return this->struct_data[index];
     }
     
-    return pos;
+
+    return data;
 }
 
+var* var::struct_pos(int64_t index){
+    return &this->struct_data[index];
+}

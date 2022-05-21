@@ -46,7 +46,7 @@ struct block
 enum DATATYPE
 {
     TYPE_UNDEFINED = 0,
-    TYPE_REFERENCE = 1,
+    TYPE_POINTER = 1,
     TYPE_ARRAY = 2,
     TYPE_STRUCT = 4,
     TYPE_BOOL = 8,
@@ -54,6 +54,7 @@ enum DATATYPE
     TYPE_FLOAT = 16,
     TYPE_STRING = 20,
     TYPE_BUFFER = 24,
+    TYPE_ARRAY_OF_ARRAY = 28,
 };
 
 enum BUFFER_DO

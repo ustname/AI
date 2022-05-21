@@ -40,7 +40,7 @@ int main()
     //std::cout << str.data() << "} " << str.length() << std::endl;
     bsi::read(parent, (char*)str.data());
     //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
-    //parent.print();
+    parent.print();
     //var* child = parent.dup("child");parent.save("amongus_file.bin");
     //child->print();
     //["name"]parent.

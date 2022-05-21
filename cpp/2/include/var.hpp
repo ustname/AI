@@ -67,7 +67,6 @@ public:
     var* arr_struct_create(const char* member, uint8_t type, int64_t count);
     int64_t arr_find(variant data);
     void arr_push(var& data);
-    variant operator[](int64_t index);
     // Structure
     int struct_write(const char* member, variant data);
     int struct_write(const char* member, const var& data);
@@ -78,7 +77,9 @@ public:
     var* struct_create(var& data);
     var* struct_create(var* data);
     var* struct_find(const char* member);
-    var* operator[](const char* name);
+    int64_t struct_find_index(const char* member);
+    var* struct_pos(int64_t index);
+    var& operator[](int64_t index);
     // Buffer
     int buf_do(void* src, int64_t len, int flag);
     //var* struct_write(char* member, _data data);

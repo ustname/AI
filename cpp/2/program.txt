@@ -9,6 +9,3 @@ new.x = 78
 
 Rect s
 s.y = 8989
-
-print new
-print s
