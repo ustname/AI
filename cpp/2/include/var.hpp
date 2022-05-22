@@ -62,9 +62,9 @@ public:
     void print();
     int save(const char* filename);
     // Array
+    void arr_array(int64_t count);
     int arr_write(int index, variant data);
     int arr_write(int index, var& data);
-    var* arr_struct_create(const char* member, uint8_t type, int64_t count);
     int64_t arr_find(variant data);
     void arr_push(var& data);
     // Structure
@@ -88,8 +88,12 @@ public:
     var init(const char* member, uint8_t type);
     var(const char* name, uint8_t type);
     var(const char* name, uint8_t type, int64_t arr_num);
-    var(uint8_t type, int64_t arr_num);
+    var(const char* name, var& struct_type, int64_t arr_num);
+    var(const char* name, var* struct_type, int64_t arr_num);
     var(uint8_t type);
+    var(uint8_t type, int64_t arr_num);
+    var(var& struct_type, int64_t arr_num);
+    var(var* struct_type, int64_t arr_num);
     int retype(uint8_t type);
     void rename(const char* name);
     var* dup(char* name);

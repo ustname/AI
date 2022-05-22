@@ -79,39 +79,65 @@ var::var(uint8_t type, int64_t arr_num)
     int64_t temp_capacity = log(arr_num) / log(2);
     this->arr_capacity = pow(2, temp_capacity + 1);
 
-    switch (type ^ TYPE_ARRAY)
+    switch (type)
     {
     case TYPE_STRING:
         this->arr_string = (struct block*)malloc(   sizeof(struct block) * arr_capacity);
-        memset((void*)this->arr_string, 1,          sizeof(struct block) * arr_capacity);
+        memset((void*)this->arr_string, 0,          sizeof(struct block) * arr_capacity);
         break;
     
     case TYPE_INT:
         this->arr_int = (int64_t*)malloc(   sizeof(int64_t) * arr_capacity);
-        memset((void*)this->arr_int, 1,     sizeof(int64_t) * arr_capacity);
+        memset((void*)this->arr_int, 0,     sizeof(int64_t) * arr_capacity);
         break;
 
     case TYPE_FLOAT:
         this->arr_float = (double*)malloc(  sizeof(double) * arr_capacity);
-        memset((void*)this->arr_float, 1,   sizeof(double) * arr_capacity);
+        memset((void*)this->arr_float, 0,   sizeof(double) * arr_capacity);
         break;
 
     case TYPE_STRUCT:
         this->arr_struct = (var*)malloc(    sizeof(var) * arr_capacity);
-        memset((void*)this->arr_struct, 1,  sizeof(var) * arr_capacity);
+        memset((void*)this->arr_struct, 0,  sizeof(var) * arr_capacity);
         break;
 
     case TYPE_BOOL:
         this->arr_bool = (bool *)malloc( sizeof(bool) * arr_capacity);
-        memset((void*)this->arr_bool, 1, sizeof(bool) * arr_capacity);
+        memset((void*)this->arr_bool, 0, sizeof(bool) * arr_capacity);
         break;
 
     default:
-        std::cerr << "Unregistered type";
+        std::cerr << "Unregistered type (" << get_datatype(type) << ")\n";
         exit(-1);
         break;
     }
     
+}
+
+var::var(var& struct_type, int64_t arr_num)
+{
+    *this = var(&struct_type, arr_num);
+}
+
+var::var(var* struct_type, int64_t arr_num)
+{
+    if (!struct_type)
+    {
+        std::cerr << "Expected a struct\n";
+        exit(-1);
+    }
+    sen::string arr_name(struct_type->name);
+    arr_name << "_";
+    int64_t write_index = arr_name.size-1;
+    *this = var(TYPE_STRUCT, arr_num);
+    for (size_t i = 0; i < arr_size; i++)
+    {
+        arr_struct[i].copy(struct_type);
+        arr_name.writei_at(i, write_index);
+        arr_struct[i].rename(arr_name.data);
+    }
+    //arr_name.clear();
+    int stop;
 }
 
 var::var(const char* name, uint8_t type)
@@ -135,7 +161,30 @@ var::var(const char* name, uint8_t type, int64_t arr_num)
     }
 
     *this = var(type, arr_num);
-    this->name = _strdup(name);
+    if (name != nullptr)
+    {
+        this->name = _strdup(name);
+    }else
+    {
+        this->name = _strdup("(NULL)");
+    }
+}
+
+var::var(const char* name, var& struct_type, int64_t arr_num)
+{
+    *this = var(name, &struct_type, arr_num);
+}
+
+var::var(const char* name, var* struct_type, int64_t arr_num)
+{
+    *this = var(struct_type, arr_num);
+    if (name != nullptr)
+    {
+        this->name = _strdup(name);
+    }else
+    {
+        this->name = _strdup("(NULL)");
+    }
 }
 
 void var::clear()
@@ -177,6 +226,7 @@ void var::clear()
         }
     }
     
+    this->type = TYPE_UNDEFINED;
 
     //std::cout << "Destroyed " << buffer << std::endl;
 }
@@ -285,19 +335,21 @@ var* var::dup(char* name)
 
 char* get_datatype(int type)
 {
+    if (type & TYPE_ARRAY)
+    {
+        return _strdup("Array");
+    }
     
     switch (type)
     {
     case TYPE_UNDEFINED :
         return _strdup("Unknown");
-    case TYPE_ARRAY :
-        return _strdup("Array");
     case TYPE_STRUCT :
         return _strdup("Structure");
     case TYPE_BOOL :
         return _strdup("Boolean");
-    case TYPE_INT ://std::cout << "im here " << strndup("Integral", 9);
-        return strndup("Integral", 9);
+    case TYPE_INT :
+        return _strdup("Integral");
     case TYPE_FLOAT :
         return _strdup("Float");
     case TYPE_STRING :
@@ -306,7 +358,6 @@ char* get_datatype(int type)
         return _strdup("Buffer");
     case TYPE_POINTER :
         return _strdup("Reference");
-
     default:
         return _strdup("NULL");
     }
@@ -343,7 +394,8 @@ static void _struct_write(var& new_struct, var& old_struct){
         {
             new_struct.struct_create(old_struct.struct_data[i]);
         }
-    }else
+    }
+    else
     {
         for (size_t i = 0; i < old_struct.struct_count; i++)
         {
@@ -598,10 +650,12 @@ void print_var(var* o, int offset)
         }
         
         size_t i = 0;
+        int64_t arr_size = 0;
         switch (o->type ^ TYPE_ARRAY)
         {
         case TYPE_INT:
-            for (i = 0; i < o->arr_size - 1; i++)
+            arr_size = o->arr_size - 1;
+            for (i = 0; i < arr_size; i++)
             {
                 //printf("%")
                 std::cout << o->arr_int[i] << ", ";
@@ -610,7 +664,8 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_FLOAT:
-            for (i = 0; i < o->arr_size - 1; i++)
+            arr_size = o->arr_size - 1;
+            for (i = 0; i < arr_size; i++)
             {
                 std::cout << o->arr_float[i] << ", ";
             }
@@ -618,7 +673,8 @@ void print_var(var* o, int offset)
             break;
 
         case TYPE_BOOL:
-            for (i = 0; i < o->arr_size - 1; i++)
+            arr_size = o->arr_size - 1;
+            for (i = 0; i < arr_size; i++)
             {
                 if (o->arr_bool[i])
                 {
@@ -638,17 +694,29 @@ void print_var(var* o, int offset)
             break;
         
         case TYPE_STRING:
-            for (i = 0; i < o->arr_size - 1; i++)
+            arr_size = o->arr_size - 1;
+            for (i = 0; i < arr_size; i++)
             {
                 std::cout << "\"" << o->arr_string[i].data << "\", ";
             }
             std::cout << "\"" << o->arr_string[i].data << "\"";
             break;
 
+        case TYPE_STRUCT:
+            arr_size = o->arr_size - 1;
+            for (i = 0; i < arr_size; i++)
+            {
+                std::cout << "\n";
+                print_var(&o->struct_data[i], 1);
+                std::cout << ",\n";
+            }
+            print_var(&o->struct_data[i], 1);
+            break;
+
         default:
             break;
         }
-        std::cout << " ]";
+        std::cout << " ]\n";
     }else if (o->type == TYPE_STRUCT)
     {
         //std::cout << "not yet coded :p"; exit(9);
@@ -672,7 +740,8 @@ void print_var(var* o, int offset)
         print_var(&o->struct_data[i], offset+1);
         std::cout << std::endl << space << "}";
         
-    }else
+    }
+    else
     {
         
         switch (o->type)
@@ -706,6 +775,7 @@ void print_var(var* o, int offset)
             break;
         
         default:
+            std::cout << "(NULL)";
             break;
         }
         return;
@@ -714,143 +784,8 @@ void print_var(var* o, int offset)
 
 void var::print()
 {
-    if ( this->type == TYPE_BUFFER )
-    {
-        std::cerr << "Cant printing buffer";
-    }
-
-    if (this->name == nullptr)
-    {
-        std::cout << "(NULL) = ";
-    }else
-    {
-        std::cout << this->name << " = ";
-    }
-    
-    if (this->type & TYPE_ARRAY)
-    {std::cout << " size = " << this->arr_size << std::endl;
-        std::cout << "[ ";
-        size_t i = 0;
-        
-        if (this->arr_size == 0)
-        {
-            std::cout << "]";
-            return;
-        }
-
-        switch (this->type ^ TYPE_ARRAY)
-        {
-        case TYPE_INT:
-            for (i = 0; i < this->arr_size - 1; i++)
-            {
-                //printf("%")
-                std::cout << this->arr_int[i] << ", ";
-            }
-            std::cout << this->arr_int[i];
-            break;
-        
-        case TYPE_FLOAT:
-            for (i = 0; i < this->arr_size - 1; i++)
-            {
-                std::cout << this->arr_float[i] << ", ";
-            }
-            std::cout << this->arr_float[i];
-            break;
-
-        case TYPE_BOOL:
-            for (i = 0; i < this->arr_size - 1; i++)
-            {
-                if (this->arr_bool[i])
-                {
-                    std::cout << "true, ";
-                }else
-                {
-                    std::cout << "false, ";
-                }
-            }
-            if (this->arr_bool[i])
-            {
-                std::cout << "true";
-            }else
-            {
-                std::cout << "false";
-            }
-            break;
-        
-        case TYPE_STRING:
-            for (i = 0; i < this->arr_size - 1; i++)
-            {
-                std::cout << "\"" << this->arr_string[i].data << "\", ";
-            }
-            std::cout << "\"" << this->arr_string[i].data << "\"";
-            break;
-
-        default:
-            break;
-        }
-        std::cout << " ]";
-    }else if (this->type == TYPE_STRUCT)
-    {
-        //std::cout << "not yet coded :p"; exit(9);
-        int64_t limit = this->struct_count-1;
-        int64_t i;
-
-        if (this->arr_size == 0)
-        {
-            std::cout << "{ }";
-            return;
-        }else
-        
-        std::cout << "{" << std::endl;
-        for (i = 0; i < limit; i++)
-        {
-            print_var(&this->struct_data[i], 1);
-            std::cout << ", " <<std::endl;
-        }
-        print_var(&this->struct_data[i], 1);
-        std::cout << std::endl << "}";
-        
-    }else
-    {
-        switch (this->type)
-        {
-        case TYPE_INT:
-            std::cout << this->int_data;
-            break;
-
-        case TYPE_FLOAT:
-            std::cout << this->float_data;
-            break;
-
-        case TYPE_BOOL:
-            if (this->bool_data)
-            {
-                std::cout << "true";
-            }else
-            {
-                std::cout << "false";
-            }
-            break;
-
-        case TYPE_STRING:
-            if (this->string_length)
-            {
-                std::cout << "\""<< this->string_data << "\"";
-            }else
-            {
-                std::cout << "(NULL)";
-            }
-            break;
-        
-        default:
-            break;
-        }
-        return;
-    }
-    
-    //std::cout << std::endl;
-    
-
+    print_var(this, 0);
+    return;
 }
 
 int var::save(const char* filename)
@@ -935,11 +870,6 @@ void var::copy(var& data) {
 }
 
 void var::copy(var* data) {
-    if (this->name)
-    {
-        delete this->name;
-    }
-    this->name = _strdup(data->name);
     this->info1 = data->info1;
     this->info2 = data->info2;
     this->info3 = data->info3;
@@ -982,7 +912,7 @@ void var::copy(var* data) {
             break;
 
         default:
-            std::cerr << "Unregistered type";
+            std::cerr << "Unregistered type (" << get_datatype(data->type) << ")\n";
             exit(-1);
             break;
         }
@@ -994,9 +924,9 @@ void var::copy(var* data) {
 
         for (size_t i = 0; i < struct_count; i++)
         {
-            this->struct_data[i].name = nullptr;
             this->struct_data[i].copy(data->struct_data[i]);
-            
+            this->struct_data[i].name = nullptr;
+            this->struct_data[i].rename(data->struct_data[i].name);
         }
     }
     else
@@ -1018,11 +948,20 @@ void var::copy(var* data) {
 }
 
 void var::rename(const char* name){
+
     if (this->name)
     {
         delete this->name;
     }
-    this->name = _strdup(name);
+
+    if (name)
+    {
+        this->name = _strdup(name);
+    }else
+    {
+        this->name = nullptr;
+    }
+    
 }
 
 // Array
@@ -1131,6 +1070,55 @@ void var::arr_push(var& data) {
     if ((this->arr_size + 1) > this->arr_capacity)
     {
 
+    }
+}
+
+void var::arr_array(int64_t count = 1)
+{
+    if (count <= 0)
+    {
+        std::cerr << "Invalid array size\n";
+        exit(-1);
+    }
+
+    int type = this->type;
+    variant data1;
+    variant data2;
+    variant data3;
+    var* var_temp{};
+
+    this->type |= TYPE_ARRAY;
+    switch (type)
+    {
+    case TYPE_STRING:
+        data1.str = this->string_data;
+        data2.i = this->string_length;
+
+        this->rename(nullptr);
+        *this = var(this->name, TYPE_ARRAY | TYPE_STRING, count);
+
+        this->arr_string[0].data = data1.str;
+        this->arr_string[0].length = data1.i;
+        break;
+
+    case TYPE_STRUCT:
+        data1.i = this->struct_count;
+        data2.str = this->struct_type;
+        data3.var = this->struct_data;
+
+        this->rename(nullptr);
+        *this = var(this->name, TYPE_ARRAY | TYPE_STRUCT, count);
+
+        for (size_t i = 0; i < count; i++)
+        {
+            
+        }
+        
+
+        break;
+    
+    default:
+        break;
     }
 }
 

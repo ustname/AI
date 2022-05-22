@@ -1,5 +1,5 @@
 #include "../include/data.hpp"
-
+#include "../include/sen.hpp"
 #pragma once
 
 uint64_t stop_at(char* str, const char* token)
@@ -143,46 +143,104 @@ char* strndup(const char* str, uint64_t len)
     return data;
 }
 
-/*
-int guess_number(char* str, var& v)
+sen::string::string()
 {
-    int i = 0;
-    int type = 0;
-    int64_t integers;
-    double floating;
-
-    if (str[i] == '-')
-    {
-        ++i;
-    }
-
-    while (str[i])
-    {
-        if (str[i] >= '0' && str[i] <= '9')
-        {
-            ++i;
-            continue;
-        }else if (str[i] == '.' || str[i] == 'f')
-        {
-            type = TYPE_FLOAT;
-            break;
-        }
-        type = TYPE_INT;
-        break;
-    }
-
-    v = var("Guessed number", type);
-
-    if (type == TYPE_INT)
-    {
-        integers = atoll(str);
-        v.write(QQi(integers));
-    }else if(type == TYPE_FLOAT)
-    {
-        floating = atof(str);
-        v.write(QQi(floating));
-    }
-
-    return type;
+    this->data = nullptr;
+    this->size = 0;
+    this->index = 0;
 }
-*/
+
+sen::string::string(const char* str)
+{
+    this->size = strlen(str);
+    this->data = _strdup(str);
+    this->index = this->size;
+}
+
+uint64_t sen::string::operator<<(const char* str)
+{
+    return this->writes(str, 0);
+}
+
+uint64_t sen::string::writei(int64_t number)
+{
+    char buffer[1000];
+    sprintf_s(buffer, "%i", number);
+    return this->writes(buffer, 0);
+}
+
+uint64_t sen::string::writef(double number)
+{
+    char buffer[1000];
+    sprintf_s(buffer, "%f", number);
+    return this->writes(buffer, 0);
+}
+
+uint64_t sen::string::writes(const char* str, uint64_t length)
+{
+    uint64_t len;
+    if (length == 0)
+    {
+        len = strlen(str);
+    }else
+    {
+        len = length;
+    }
+    
+    if (!size)
+    {
+        *this = sen::string(str);
+    }else
+    {
+        if ( (index + len) > size)
+        {
+            size = index + len + 1;
+            data = (char*)realloc(data, size);
+        }
+        size_t i;
+        for (i = 0; i < len; i++)
+        {
+            data[index + i] = str[i];
+        }
+        data[index + i] = '\0';
+        index += len;
+    }
+    return len;
+}
+
+uint64_t sen::string::writes_at(const char* str, uint64_t length, int64_t pos)
+{
+    if (pos > size)
+    {
+        std::cerr << "Overflowing index\n";
+        exit(-1);
+    }
+    
+    index = pos;
+    this->writes(str, length);
+}
+
+uint64_t sen::string::writei_at(int64_t number, int64_t pos)
+{
+    char buffer[1000];
+    sprintf_s(buffer, "%i", number);
+    return this->writes_at(buffer, 0, pos);
+}
+
+uint64_t sen::string::writef_at(double number, int64_t pos)
+{
+    char buffer[1000];
+    sprintf_s(buffer, "%f", number);
+    return this->writes_at(buffer, 0, pos);
+}
+
+void sen::string::clear()
+{
+    if (size)
+    {
+        free(data);
+        size = 0;
+    }
+    index = 0;
+    data = nullptr;
+}

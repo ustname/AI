@@ -14,46 +14,22 @@ bool sen_comp(const char* str, const char* prod);
 
 char* strndup(const char* str, uint64_t len);
 
-/*
-int guess_number(char* str, var& v)
+namespace sen
 {
-    int i = 0;
-    int type = 0;
-    int64_t integers;
-    double floating;
-
-    if (str[i] == '-')
-    {
-        ++i;
-    }
-
-    while (str[i])
-    {
-        if (str[i] >= '0' && str[i] <= '9')
-        {
-            ++i;
-            continue;
-        }else if (str[i] == '.' || str[i] == 'f')
-        {
-            type = TYPE_FLOAT;
-            break;
-        }
-        type = TYPE_INT;
-        break;
-    }
-
-    v = var("Guessed number", type);
-
-    if (type == TYPE_INT)
-    {
-        integers = atoll(str);
-        v.write(QQi(integers));
-    }else if(type == TYPE_FLOAT)
-    {
-        floating = atof(str);
-        v.write(QQi(floating));
-    }
-
-    return type;
+    class string{
+    public:
+        string();
+        string(const char* str);
+        uint64_t index;
+        uint64_t size;
+        char* data;
+        uint64_t operator<<(const char* str);
+        uint64_t writes(const char* str, uint64_t length = 0);
+        uint64_t writef(double number);
+        uint64_t writei(int64_t number);
+        uint64_t writes_at(const char* str, uint64_t length, int64_t index);
+        uint64_t writef_at(double number , int64_t index);
+        uint64_t writei_at(int64_t number, int64_t index);
+        void clear();
+    };
 }
-*/

@@ -553,7 +553,11 @@ var* declare(var& root, std::vector<unit>& line, int& offset)
             }else if (ret == 4)
             {
                 return root.struct_create(line[1].info2.str, TYPE_BOOL);
-            }else if (ret == 6)
+            }else if (ret == 5)
+            {
+                pos = declare(root, line, offset);
+            }
+            else if (ret == 6)
             {
                 if (declare_class)
                 {

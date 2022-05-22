@@ -34,26 +34,13 @@ int main()
     ret_int.struct_create("x", TYPE_INT)->write(v);
     ret_int.struct_create("y", TYPE_INT)->write(v);
     bsi::push_class(ret_int);
-    //parent.struct_create("y", TYPE_FLOAT)->write(QQf(9.987));
     std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt");
-    //std::cout << (int)str[str.length()];exit(-1);
-    //std::cout << str.data() << "} " << str.length() << std::endl;
-    bsi::read(parent, (char*)str.data());
-    //parent.str_write(9, QQi(9));printf(" 678 ", &parent);
-    parent.print();
-    //var* child = parent.dup("child");parent.save("amongus_file.bin");
-    //child->print();
-    //["name"]parent.
+    var* temp = new var("lol", &ret_int, 20);
+    temp->print();
+    temp->clear();
+    temp->print();
+    sen::string word("987");
+    word.writei_at(89, 1);
+    word.writei_at(89, 3);
     int number = 0;
-    //parent.clear();
-    //parent = var("parent", TYPE_STRUCT);
-    //parent.struct_create("a", TYPE_INT);
-    //parent.struct_write("a", QQi(9));
-    //parent["a"]->print();
-    //bsi::read(&parent, s);
-    //std::cout << parent.data3.var[0].name;
-    //print_len(s, name_len(s));
-    
-    //s += stop_at(s, " ");
-    //std::cout << s;
 }
