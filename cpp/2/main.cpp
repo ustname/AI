@@ -27,20 +27,18 @@ int main()
     v.i = 9;
     //char* s = "int num = 1000 + (9 / 5) * 8"; //printf("top(%p) ", s);
     var& parent = *bsi::init(); //printf(" [%p] ", parent);
-    var* ENUM;
-    (ENUM = parent.struct_find("enum"))->struct_create("true", TYPE_BOOL)->write(v); v.b = 7;
-    parent.struct_find("enum")->struct_create("false", TYPE_BOOL)->write(v);
-    var ret_int("Rect", TYPE_STRUCT); 
-    ret_int.struct_create("x", TYPE_INT)->write(v);
-    ret_int.struct_create("y", TYPE_INT)->write(v);
-    bsi::push_class(ret_int);
     std::string str = read_file("C:\\Users\\HP\\Documents\\pro\\AI\\cpp\\2\\program.txt");
-    var* temp = new var("lol", &ret_int, 20);
-    temp->print();
-    temp->clear();
-    temp->print();
-    sen::string word("987");
-    word.writei_at(89, 1);
-    word.writei_at(89, 3);
+
+    var rect("Rect", TYPE_STRUCT);
+    rect.struct_create("x", TYPE_INT)->write(v);
+    rect.struct_create("y", TYPE_FLOAT)->write(v);
+    bsi::push_class(rect);
+    bsi::read(parent[4], (char*)str.data());
+    
+    /*var temp("Halima", TYPE_STRING);
+    temp.arr_array(0);
+    v.str = (char*)"Dustin mencintai mu";
+    temp.arr_push(v);
+    temp.print();*/
     int number = 0;
 }

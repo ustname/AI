@@ -110,7 +110,15 @@ int64_t sen_len(const char* str) {
 
 bool sen_comp(const char* str, const char* prod)
 {
-    //int max_len = stop_at(str, "\n");
+    if (prod == nullptr)
+    {
+        return false;
+    }
+    else if (str == nullptr)
+    {
+        return false;
+    }
+
     int prod_len = strlen(prod);
     int str_len =  strlen(str);
     if (prod_len != str_len)
@@ -152,9 +160,19 @@ sen::string::string()
 
 sen::string::string(const char* str)
 {
-    this->size = strlen(str);
-    this->data = _strdup(str);
-    this->index = this->size;
+    if (str != nullptr)
+    {
+        this->size = strlen(str);
+        this->data = _strdup(str);
+        this->index = this->size;
+    }
+    else
+    {
+        this->data = nullptr;
+        this->size = 0;
+        this->index = 0;
+    }
+    
 }
 
 uint64_t sen::string::operator<<(const char* str)

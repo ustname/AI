@@ -24,6 +24,9 @@ public:
         int64_t int_data;
         double float_data;
         bool bool_data;
+        variant vint_data;
+        variant vfloat_data;
+        variant vbool_data;
         int64_t struct_count;
         char buf_info[8];
     };
@@ -33,6 +36,7 @@ public:
         variant data2;
         int64_t arr_capacity;
         char* string_data;
+        variant vstring_data;
         char* struct_type;
         int64_t buf_number;
     };
@@ -55,6 +59,11 @@ public:
     int write(variant data);
     int write(var& data);
     int write(var* data);
+    int write_int(int64_t data);
+    int write_float(double data);
+    int write_string(const char* data);
+    int write_string(std::string& data);
+    int write_bool(bool data);
     variant read();
     variant read(int64_t index);
     int compare(var& data);
@@ -67,6 +76,7 @@ public:
     int arr_write(int index, var& data);
     int64_t arr_find(variant data);
     void arr_push(var& data);
+    void arr_push(variant data);
     // Structure
     int struct_write(const char* member, variant data);
     int struct_write(const char* member, const var& data);

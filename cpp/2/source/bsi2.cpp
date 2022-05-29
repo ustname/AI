@@ -2,41 +2,57 @@
 #include "../include/sen.hpp"
 
 var* bsi::bsi_root;
+var* base;
+bool is_by_bsi = false;
 
 var* bsi::search(char* member, int& src)
 {
     var* t;
     var* res;
-
-    if (res = bsi::bsi_root->struct_find(member))
+    if (!is_by_bsi)
     {
-        src = BSI_FROM_BASE;
-        return res;
-    }
-    if (t = bsi::bsi_root->struct_find("enum"))
-    {
-        if (res = t->struct_find(member))
+        if (res = bsi::bsi_root->struct_find(member))
         {
-            src = BSI_FROM_ENUM;
+            src = BSI_FROM_BASE;
             return res;
         }
-    }
-    if (t = bsi::bsi_root->struct_find("class"))
-    {
-        if (res = t->struct_find(member))
+        if (t = bsi::bsi_root->struct_find("enum"))
         {
-            src = BSI_FROM_CLASS;
-            return res;
+            if (res = t->struct_find(member))
+            {
+                src = BSI_FROM_ENUM;
+                return res;
+            }
+        }
+        if (t = bsi::bsi_root->struct_find("class"))
+        {
+            if (res = t->struct_find(member))
+            {
+                src = BSI_FROM_CLASS;
+                return res;
+            }
+        }
+        if (t = bsi::bsi_root->struct_find("function"))
+        {
+            if (res = t->struct_find(member))
+            {
+                src = BSI_FROM_FUNCTION;
+                return res;
+            }
         }
     }
-    if (t = bsi::bsi_root->struct_find("function"))
+    else
     {
-        if (res = t->struct_find(member))
+        for (size_t i = 1; i < 5; i++)
         {
-            src = BSI_FROM_FUNCTION;
-            return res;
+            if (res = bsi::bsi_root->struct_data[i].struct_find(member))
+            {
+                src = i-1;
+                return res;
+            }
         }
     }
+    
     
     return 0;
 }
@@ -54,7 +70,6 @@ var* bsi::push_function(const char* name, var& member, char* str)
     function->struct_create("argc", TYPE_INT);
     function->struct_create("argv", TYPE_STRUCT);
     var* f_data = function->struct_create("data", TYPE_BUFFER);
-
     ret.clear();
     return function;
 }
@@ -87,7 +102,7 @@ int bsi::push_class(var& data) {
 }
 
 var* bsi::declare_class(const char* new_var, var* prod) {
-    var* temp = bsi::bsi_root->struct_create(new_var, TYPE_STRUCT);
+    var* temp = base->struct_create(new_var, TYPE_STRUCT);
     temp->write(prod);
     temp->struct_type = _strdup(prod->name);
     return temp;
@@ -96,9 +111,12 @@ var* bsi::declare_class(const char* new_var, var* prod) {
 var* bsi::init()
 {
     var* root = new var("root", TYPE_STRUCT);
+    root->struct_create("env", TYPE_STRUCT);
     root->struct_create("enum", TYPE_STRUCT);
     root->struct_create("class", TYPE_STRUCT);
     root->struct_create("function", TYPE_STRUCT);
+    base = root->struct_create("base", TYPE_STRUCT);
     bsi::bsi_root = root;
+    is_by_bsi = true;
     return root;
 }

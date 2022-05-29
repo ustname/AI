@@ -45,7 +45,7 @@ struct block
 
 enum DATATYPE
 {
-    TYPE_UNDEFINED = 0,
+    TYPE_NULL = 0,
     TYPE_POINTER = 1,
     TYPE_ARRAY = 2,
     TYPE_STRUCT = 4,
