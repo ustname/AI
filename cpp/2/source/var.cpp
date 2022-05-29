@@ -305,62 +305,136 @@ int var::write(var& v)
         exit(-1);
     }
 
+    /// write this array
     if (this->type & TYPE_ARRAY)
     {
-        std::cerr << "Not written yet for array\n";
-        exit(-1);
+        /// write array into array
+        if (v.type & TYPE_ARRAY)
+        {
+            switch (this->type ^ TYPE_ARRAY)
+            {
+            case TYPE_STRING:
+                for (size_t i = 0; i < v.arr_size; i++)
+                {
+                    this->arr_push(vstring_data);
+                }
+                break;
+
+            case TYPE_INT:
+                for (size_t i = 0; i < v.arr_size; i++)
+                {
+                    this->arr_push(vint_data);
+                }
+                break;
+
+            case TYPE_FLOAT:
+                for (size_t i = 0; i < v.arr_size; i++)
+                {
+                    this->arr_push(vfloat_data);
+                }
+                break;
+
+            case TYPE_POINTER:
+                std::cout << "Not yet coded :p" << std::endl;
+                exit(-1);
+                break;
+
+            case TYPE_BOOL:
+                for (size_t i = 0; i < v.arr_size; i++)
+                {
+                    this->arr_push(vbool_data);
+                }
+                break;
+
+            case TYPE_STRUCT:
+                _struct_write(*this, v);
+                break;
+
+            default:
+                std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
+                exit(-1);
+            }
+        }
+        /// write single data info array
+        else
+        {
+            switch (v.type)
+            {
+            case TYPE_STRUCT:
+                _struct_write(*this, v);
+                break;
+
+            default:
+                this->arr_push(v);
+            }
+        }
     }
-    
-    if (this->type != v.type)
+    /// write this single data
+    else
     {
-        if ( 
-            ((this->type == TYPE_INT) || (this->type == TYPE_FLOAT)) & 
-                ((v.type == TYPE_INT) || (v.type == TYPE_FLOAT)) 
-                )
+        if(v.type & TYPE_ARRAY)
         {
-            
-        }else
-        {
-            std::cerr << "Cant write " << this->name << " to " << v.name << std::endl;
+            std::cerr << "Cant write array into a single data\n";
             exit(-1);
         }
-    }
-
-    switch (this->type)
-    {
-    case TYPE_STRING:
-        if (this->string_length != 0)
+        /// for different data type
+        if (this->type != v.type)
         {
-            free(this->string_data);
+            if ((this->type == TYPE_INT) && (v.type == TYPE_FLOAT))
+            {
+                this->int_data = v.float_data;
+            }
+            else if ((this->type == TYPE_FLOAT) && (v.type == TYPE_INT))
+            {
+                this->float_data = v.int_data;
+            }
+            else
+            {
+                std::cerr << "Cant write from " << get_datatype(v.type) << " to " << get_datatype(this->type) << std::endl;
+                exit(-1);
+            }
+            return 0;
         }
-        this->string_data = _strdup(v.string_data);
-        this->string_length = v.string_length;
-        break;
-    
-    case TYPE_INT:
-        this->int_data = v.int_data;
-        break;
+        /// for same data type
+        else
+        {
+            switch (this->type)
+            {
+            case TYPE_STRING:
+                if (this->string_length != 0)
+                {
+                    free(this->string_data);
+                }
+                this->string_data = _strdup(v.string_data);
+                this->string_length = v.string_length;
+                break;
 
-    case TYPE_FLOAT:
-        this->float_data = v.float_data;
-        break;
+            case TYPE_INT:
+                this->int_data = v.int_data;
+                break;
 
-    case TYPE_POINTER:
-        std::cout << "Not yet coded :p" << std::endl;
-        exit(-1);
-        break;
+            case TYPE_FLOAT:
+                this->float_data = v.float_data;
+                break;
 
-    case TYPE_BOOL:
-        this->data1.b = v.data1.b;
-        break;
+            case TYPE_POINTER:
+                std::cout << "Not yet coded :p" << std::endl;
+                exit(-1);
+                break;
 
-    case TYPE_STRUCT:
-        _struct_write(*this, v);
-        break;
+            case TYPE_BOOL:
+                this->data1.b = v.data1.b;
+                break;
 
-    default:
-        std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
-        exit(-1);
+            case TYPE_STRUCT:
+                _struct_write(*this, v);
+                break;
+
+            default:
+                std::cerr << this->name << " has unknown data type (" << this->type << ")" << std::endl;
+                exit(-1);
+            }
+        }
     }
     
     return 0;
@@ -1074,8 +1148,12 @@ int var::arr_write(int index, var& data)
         this->arr_float[index] = data.float_data;
         break;
     
-    case TYPE_STRING: //std::cout << index;
+    case TYPE_STRING:
         this->arr_string[index].length = data.string_length;
+        if (this->arr_string[index].data)
+        {
+            delete this->arr_string[index].data;
+        }
         this->arr_string[index].data = _strdup(data.string_data);
         break;
         
@@ -1140,7 +1218,7 @@ void var::arr_push(variant data)
 
     if (!this->arr_capacity)
     {
-        arr_capacity++;
+        arr_capacity = 1;
         switch (type ^ TYPE_ARRAY)
         {
         case TYPE_STRING:
@@ -1304,6 +1382,37 @@ void var::arr_array(int64_t count = 1)
     default:
         break;
     }
+}
+
+void var::arr_clear()
+{
+    if ( !(this->type & TYPE_ARRAY) )
+    {
+        std::cerr << this->name << " is not an array\n";
+        exit(-1);
+    }
+    
+    switch (this->type ^ TYPE_ARRAY)
+    {
+    case TYPE_STRING:
+        for (size_t i = 0; i < this->arr_size; i++)
+        {
+            delete this->arr_string[i].data;
+            this->arr_string[i].length = 0;
+        }
+        break;
+
+    case TYPE_STRUCT:
+        for (size_t i = 0; i < this->arr_size; i++)
+        {
+            this->struct_data[i].clear();
+        }
+        break;
+    
+    default:
+        break;
+    }
+    this->arr_size = 0;
 }
 
 // dont use this

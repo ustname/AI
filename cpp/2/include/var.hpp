@@ -72,6 +72,7 @@ public:
     int save(const char* filename);
     // Array
     void arr_array(int64_t count);
+    void arr_clear();
     int arr_write(int index, variant data);
     int arr_write(int index, var& data);
     int64_t arr_find(variant data);
